@@ -1,0 +1,14 @@
+# Data
+data/raw/
+data/processed/
+
+# Model artifacts
+models/*.pkl
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
