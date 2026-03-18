@@ -2,6 +2,9 @@
 data/raw/
 data/processed/
 
+# Results
+results/
+
 # Model artifacts
 models/*.pkl
 
