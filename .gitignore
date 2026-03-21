@@ -1,6 +1,7 @@
 # Data
 data/raw/
 data/processed/
+archive
 
 # Results
 results/
@@ -15,3 +16,5 @@ __pycache__/
 
 # OS
 .DS_Store
+
+CS4248_PROJ.code-workspace
