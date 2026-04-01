@@ -21,5 +21,5 @@ Ensure the following files are in `data/raw/`:
 
 ```bash
 # Preprocess and merge datasets
-uv run python scripts/preprocess.py
+uv run python scripts/nb/preprocess.py
 ```
