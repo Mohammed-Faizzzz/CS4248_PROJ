@@ -1,11 +1,11 @@
 # Data
 data/
 
-# Results
-results/
+# Logs
+logs/
 
-# Model artifacts
-models/*.pkl
+# Models
+models/
 
 # Python
 __pycache__/

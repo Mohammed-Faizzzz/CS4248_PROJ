@@ -67,7 +67,7 @@ def main():
                         help="Path to test split CSV")
     parser.add_argument("--model-name", default="FacebookAI/roberta-base",
                         help="Base model to fine-tune from")
-    parser.add_argument("--output-dir", default="results/roberta-finetuned")
+    parser.add_argument("--output-dir", default="models/roberta-finetuned")
     parser.add_argument("--val-size", type=float, default=0.15,
                         help="Fraction of training data for validation")
     parser.add_argument("--epochs", type=int, default=5)

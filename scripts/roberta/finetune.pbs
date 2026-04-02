@@ -22,7 +22,7 @@ export SCRATCH_DIR="/scratch/users/nus/$USER"
 export HF_HOME="$SCRATCH_DIR/.cache/huggingface"
 mkdir -p "$HF_HOME"
 mkdir -p "logs"
-mkdir -p "results"
+mkdir -p "models"
 
 export PIP_CACHE_DIR="$SCRATCH_DIR/.cache/pip"
 export TMPDIR="$SCRATCH_DIR/tmp"
@@ -48,17 +48,17 @@ echo "  GPU: $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
 echo ""
 
 # Fine-tune roberta-base
-python scripts/finetune_roberta.py \
+python -m scripts.roberta.finetune \
     --train data/splits/train.csv \
     --test  data/splits/test.csv \
     --model-name FacebookAI/roberta-base \
-    --output-dir results/roberta-finetuned \
-    --epochs 5 \
-    --batch-size 32 \
-    --lr 2e-5
+    --output-dir models/roberta-finetuned \
+    --epochs 10 \
+    --batch-size 16 \
+    --lr 1e-5
 
 echo ""
 echo "Job finished at: $(date)"
-echo "Checkpoint saved to: results/roberta-finetuned/"
+echo "Checkpoint saved to: models/roberta-finetuned/"
 echo ""
 
