@@ -42,3 +42,37 @@ uv run python -m scripts.nb.train \
 ```bash
 qsub scripts/roberta/finetune.pbs
 ```
+
+The fine-tuned RoBERTa model is also available on HuggingFace Hub:
+
+```bash
+# Download checkpoint locally
+huggingface-cli download shawnnygoh/cs4248-roberta-sentiment --local-dir models/roberta-finetuned
+```
+
+## Generate predictions
+
+Run each model on the Elon tweets to produce prediction CSVs.
+ 
+```bash
+# NB predictions
+uv run python -m scripts.analysis.predict \
+    --model-type nb \
+    --model-path models/nb_model.pkl \
+    --data data/tweets/elon_tweets.csv \
+    --output predictions/nb_preds.csv
+ 
+# RoBERTa predictions (from HuggingFace Hub)
+uv run python -m scripts.analysis.predict \
+    --model-type roberta \
+    --model-path shawnnygoh/cs4248-roberta-sentiment \
+    --data data/tweets/elon_tweets.csv \
+    --output predictions/roberta_preds.csv
+
+# RoBERTa predictions (from local path) 
+uv run python -m scripts.analysis.predict \
+    --model-type roberta \
+    --model-path models/roberta-finetuned \
+    --data data/tweets/elon_tweets.csv \
+    --output predictions/roberta_preds.csv
+```

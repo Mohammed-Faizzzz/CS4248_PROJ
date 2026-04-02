@@ -7,6 +7,9 @@ logs/
 # Models
 models/
 
+# Predictions
+predictions/
+
 # Python
 __pycache__/
 *.pyc
