@@ -23,6 +23,15 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.utils.validation import check_is_fitted
 
 
+def nblog_features(X_train, y_train, X_to_transform, alpha=1):
+    """Scale features by NB log-count ratios (Wang & Manning 2012, binary)."""
+    p = alpha + X_train[y_train == 1].sum(axis=0)
+    q = alpha + X_train[y_train == 0].sum(axis=0)
+    r = np.log((p / p.sum()) / (q / q.sum()))
+    r = np.squeeze(np.asarray(r))
+    return X_to_transform.multiply(r)
+
+
 def _to_cupy_sparse(X):
     import cupyx.scipy.sparse as csp
     return csp.csr_matrix(X)
@@ -62,7 +71,7 @@ class NBWeightedLR(BaseEstimator, ClassifierMixin):
         If True, use cuML GPU-accelerated LR. Requires RAPIDS cuML.
     """
 
-    def __init__(self, C=1.0, alpha=1.0, l1_ratio=0.0, class_weight=None, use_gpu=False):
+    def __init__(self, C=5.0, alpha=1.0, l1_ratio=0.0, class_weight=None, use_gpu=False):
         self.C = C
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -98,12 +107,13 @@ class NBWeightedLR(BaseEstimator, ClassifierMixin):
                 max_iter=1000,
                 class_weight=self.class_weight,
             )
+        penalty = "l1" if self.l1_ratio == 1.0 else "l2"
         return LogisticRegression(
             C=self.C,
-            l1_ratio=self.l1_ratio,
-            solver="saga",
+            penalty=penalty,
+            solver="liblinear",
             class_weight=self.class_weight,
-            max_iter=1000,
+            max_iter=2000,
             random_state=42,
         )
 

@@ -16,14 +16,15 @@ from scripts.common import preprocess_text, build_features, transform_features
 from scripts.lr.nb_weighted import NBWeightedLR
 
 
-def _make_lr(C=1.0, l1_ratio=0.0, class_weight=None):
+def _make_lr(C=5.0, l1_ratio=0.0, class_weight=None):
     """Return a plain LogisticRegression."""
+    penalty = "l1" if l1_ratio == 1.0 else "l2"
     return LogisticRegression(
         C=C,
-        l1_ratio=l1_ratio,
-        solver="saga",
+        penalty=penalty,
+        solver="liblinear",
         class_weight=class_weight,
-        max_iter=1000,
+        max_iter=2000,
         random_state=42,
     )
 
@@ -43,6 +44,7 @@ def train_and_evaluate(
     X_train, y_train, X_test, y_test,
     clf,
     label_names=None,
+    threshold=0.5,
 ):
     """5-fold CV on train set, then evaluate on held-out test set."""
     print(f"\n{clf.__class__.__name__} config: {clf.get_params()}")
@@ -56,7 +58,12 @@ def train_and_evaluate(
     print(f"Macro F1 (CV): {cv_scores.mean():.4f} \u00B1 {cv_scores.std():.4f}")
 
     clf.fit(X_train, y_train)
-    y_pred = clf.predict(X_test)
+
+    # For binary classification, apply a tunable probability threshold
+    if len(label_names) == 2 and threshold != 0.5:
+        y_pred = (clf.predict_proba(X_test)[:, 1] >= threshold).astype(int)
+    else:
+        y_pred = clf.predict(X_test)
 
     print(classification_report(y_test, y_pred, target_names=label_names, zero_division=0))
     print("Confusion matrix:")
@@ -70,10 +77,10 @@ def optimise_lr(X_train, y_train, n_jobs=-1, n_iter=20):
 
     param_dist = {
         "C": loguniform(0.01, 20),
-        "l1_ratio": [0.0, 1.0],
+        "penalty": ["l1", "l2"],
         "class_weight": [None, "balanced"],
     }
-    base = LogisticRegression(solver="saga", max_iter=1000, random_state=42)
+    base = LogisticRegression(solver="liblinear", max_iter=2000, random_state=42)
     cv = StratifiedKFold(5, shuffle=True, random_state=42)
     search = RandomizedSearchCV(base, param_dist, n_iter=n_iter, cv=cv,
                                 scoring="f1_macro", n_jobs=n_jobs,
@@ -81,8 +88,7 @@ def optimise_lr(X_train, y_train, n_jobs=-1, n_iter=20):
     print(f"\nRunning RandomizedSearchCV (plain LR, {n_iter} iterations)...")
     search.fit(X_train, y_train)
     best = search.best_params_
-    penalty_label = "l1" if best["l1_ratio"] == 1.0 else "l2"
-    print(f"\nBest params:   C={best['C']:.4f}, penalty={penalty_label}, class_weight={best['class_weight']}")
+    print(f"\nBest params:   C={best['C']:.4f}, penalty={best['penalty']}, class_weight={best['class_weight']}")
     print(f"Best CV macro F1: {search.best_score_:.4f}")
     return search.best_estimator_
 
@@ -164,6 +170,10 @@ def main():
         "--use-gpu", action="store_true",
         help="Use cuML GPU-accelerated LR (requires RAPIDS cuML). "
              "Has no effect on plain sklearn LR.",
+    )
+    parser.add_argument(
+        "--threshold", type=float, default=0.52,
+        help="Probability threshold for positive class in binary mode (default: 0.52)",
     )
     parser.add_argument("--save-model", default="models/lr_model.pkl")
     args = parser.parse_args()
@@ -281,6 +291,7 @@ def main():
             X_train, y_train, X_test, y_test,
             clf=clf,
             label_names=label_names,
+            threshold=args.threshold,
         )
 
     # Persist

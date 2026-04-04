@@ -10,7 +10,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 # Lazy-loaded NLTK components
 _stemmer = None
 _lemmatizer = None
-_stop_words = None
 
 
 def _get_stemmer():
@@ -36,92 +35,77 @@ def _get_lemmatizer():
     return _lemmatizer
 
 
-def _get_stop_words():
-    global _stop_words
-    if _stop_words is None:
-        import nltk
-        nltk.download("stopwords", quiet=True)
-        from nltk.corpus import stopwords
-
-        # Preserve negation words — important for sentiment
-        negation_words = {
-            "no", "not", "nor", "neither", "never", "nobody",
-            "nothing", "nowhere", "hardly", "barely", "seldom",
-            "scarcely", "don", "don't", "doesn", "doesn't", "didn",
-            "didn't", "isn", "isn't", "wasn", "wasn't", "weren",
-            "weren't", "won", "won't", "wouldn", "wouldn't", "shouldn",
-            "shouldn't", "couldn", "couldn't", "hasn", "hasn't", "haven",
-            "haven't", "hadn", "hadn't", "aren", "aren't", "ain", "mightn",
-            "mightn't", "mustn", "mustn't", "needn", "needn't",
-        }
-        _stop_words = set(stopwords.words("english")) - negation_words
-    return _stop_words
+def negate_scope(text):
+    """Mark tokens in negation scope with NOT_ prefix (punctuation or 3-token limit ends scope)."""
+    negation_cues = r"\b(not|n't|never|no|nothing|nowhere|neither|nor|nobody)\b"
+    punctuation = r'[.!?,;:\)]'
+    tokens = text.split()
+    result = []
+    in_negation = False
+    neg_count = 0
+    for token in tokens:
+        if re.search(negation_cues, token, re.IGNORECASE):
+            in_negation = True
+            neg_count = 0
+            result.append(token)
+        elif re.search(punctuation, token):
+            in_negation = False
+            result.append(token)
+        elif in_negation:
+            result.append(f"NOT_{token}")
+            neg_count += 1
+            if neg_count >= 3:
+                in_negation = False
+        else:
+            result.append(token)
+    return ' '.join(result)
 
 
 def preprocess_text(
     text: str,
     use_stemming: bool = False,
     use_lemmatization: bool = False,
-    remove_stopwords: bool = True,
     handle_negation: bool = True,
 ) -> str:
-    """Tokenise, optionally handle negation, remove stopwords, stem/lemmatise."""
+    """Normalise text and optionally apply negation marking, stemming, or lemmatisation."""
     if not isinstance(text, str):
         return ""
 
-    t = text.lower()
-    t = re.sub(r"[^\w\s']", " ", t)
-    t = re.sub(r"\s+", " ", t).strip()
-    tokens = t.split()
+    text = text.lower()
+    text = text.replace("``", '"').replace("''", '"')
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\b(\w+)\s+(n[''']t|'[a-z]+)\b", r"\1\2", text)
+    text = re.sub(r"(\w)\s+'(?=\s)", r"\1'", text)
+    text = re.sub(r"\(\s+", "(", text)
+    text = re.sub(r"\s+\)", ")", text)
+    text = re.sub(r"\\*/", "/", text)
+    text = re.sub(r"\s+([?.!,;:])", r"\1", text)
+    text = re.sub(r'"\s*(.*?)\s*"', r'"\1"', text)
 
     if handle_negation:
-        negation_cues = {
-            "not", "no", "never", "neither", "nobody", "nothing",
-            "nowhere", "nor", "hardly", "barely", "scarcely",
-            "don't", "doesn't", "didn't", "isn't", "wasn't",
-            "weren't", "won't", "wouldn't", "shouldn't", "couldn't",
-            "hasn't", "haven't", "hadn't", "aren't", "can't",
-            "ain't", "mightn't", "mustn't", "needn't",
-        }
-        negated = []
-        in_negation = False
-        for token in tokens:
-            if token in negation_cues:
-                in_negation = True
-                negated.append(token)
-            elif in_negation:
-                negated.append(f"NOT_{token}")
-                if token in {"but", "however", "although", "though"}:
-                    in_negation = False
-            else:
-                negated.append(token)
-        tokens = negated
+        text = negate_scope(text)
 
-    if remove_stopwords:
-        sw = _get_stop_words()
-        tokens = [
-            t for t in tokens
-            if t not in sw and not t.startswith("NOT_") or t.startswith("NOT_")
-        ]
+    if use_stemming or use_lemmatization:
+        tokens = text.split()
+        if use_stemming:
+            stemmer = _get_stemmer()
+            tokens = [
+                f"NOT_{stemmer.stem(t[4:])}" if t.startswith("NOT_") else stemmer.stem(t)
+                for t in tokens
+            ]
+        elif use_lemmatization:
+            lemmatizer = _get_lemmatizer()
+            tokens = [
+                f"NOT_{lemmatizer.lemmatize(t[4:])}" if t.startswith("NOT_")
+                else lemmatizer.lemmatize(t)
+                for t in tokens
+            ]
+        text = " ".join(tokens)
 
-    if use_stemming:
-        stemmer = _get_stemmer()
-        tokens = [
-            f"NOT_{stemmer.stem(t[4:])}" if t.startswith("NOT_") else stemmer.stem(t)
-            for t in tokens
-        ]
-    elif use_lemmatization:
-        lemmatizer = _get_lemmatizer()
-        tokens = [
-            f"NOT_{lemmatizer.lemmatize(t[4:])}" if t.startswith("NOT_")
-            else lemmatizer.lemmatize(t)
-            for t in tokens
-        ]
-
-    return " ".join(tokens)
+    return text
 
 
-def build_features(texts, use_bigrams=False, use_trigrams=False, use_char_ngrams=False, max_features=80_000):
+def build_features(texts, use_bigrams=False, use_trigrams=True, use_char_ngrams=True, max_features=80_000):
     """Fit TF-IDF vectoriser(s) on *texts* and return (X, vectorizers)."""
     vectorizers = []
 
@@ -132,12 +116,12 @@ def build_features(texts, use_bigrams=False, use_trigrams=False, use_char_ngrams
     else:
         ngram_range = (1, 1)
     word_vec = TfidfVectorizer(
+        analyzer="word",
         ngram_range=ngram_range,
         max_features=max_features,
-        sublinear_tf=True,
         min_df=2,
-        max_df=0.95,
-        strip_accents="unicode",
+        use_idf=True,
+        sublinear_tf=True,
     )
     X_word = word_vec.fit_transform(texts)
     vectorizers.append(("word_tfidf", word_vec))
@@ -147,9 +131,8 @@ def build_features(texts, use_bigrams=False, use_trigrams=False, use_char_ngrams
         char_vec = TfidfVectorizer(
             analyzer="char_wb",
             ngram_range=(3, 5),
-            max_features=50_000,
-            sublinear_tf=True,
             min_df=2,
+            sublinear_tf=True,
         )
         X_char = char_vec.fit_transform(texts)
         vectorizers.append(("char_tfidf", char_vec))
