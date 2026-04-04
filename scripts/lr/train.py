@@ -7,10 +7,11 @@ import argparse
 import pickle
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import StratifiedKFold, cross_val_score, RandomizedSearchCV
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, log_loss, brier_score_loss
 
 from scripts.common import preprocess_text, build_features, transform_features
 from scripts.lr.nb_weighted import NBWeightedLR
@@ -58,16 +59,40 @@ def train_and_evaluate(
     print(f"Macro F1 (CV): {cv_scores.mean():.4f} \u00B1 {cv_scores.std():.4f}")
 
     clf.fit(X_train, y_train)
+    proba = clf.predict_proba(X_test)
 
     # For binary classification, apply a tunable probability threshold
     if len(label_names) == 2 and threshold != 0.5:
-        y_pred = (clf.predict_proba(X_test)[:, 1] >= threshold).astype(int)
+        y_pred = (proba[:, 1] >= threshold).astype(int)
     else:
         y_pred = clf.predict(X_test)
 
     print(classification_report(y_test, y_pred, target_names=label_names, zero_division=0))
     print("Confusion matrix:")
     print(confusion_matrix(y_test, y_pred))
+
+    # --- Confidence metrics ---
+    print("\nConfidence metrics (test set):")
+    max_proba = proba.max(axis=1)
+    print(f"  Mean confidence:   {max_proba.mean():.4f}")
+    print(f"  Median confidence: {np.median(max_proba):.4f}")
+    print(f"  Low confidence (<0.5):  {(max_proba < 0.5).sum()} samples ({(max_proba < 0.5).mean():.1%})")
+    print(f"  High confidence (>0.9): {(max_proba > 0.9).sum()} samples ({(max_proba > 0.9).mean():.1%})")
+
+    n_classes = len(label_names)
+    ll = log_loss(y_test, proba, labels=list(range(n_classes)))
+    print(f"  Log loss:          {ll:.4f}")
+
+    if n_classes == 2:
+        bs = brier_score_loss(y_test, proba[:, 1])
+        print(f"  Brier score:       {bs:.4f}")
+
+    print("\n  Per-class mean confidence (when predicted as that class):")
+    for i, name in enumerate(label_names):
+        mask = y_pred == i
+        if mask.sum() > 0:
+            print(f"    {name:12s}: {proba[mask, i].mean():.4f}  (n={mask.sum()})")
+
     return clf
 
 
@@ -76,7 +101,7 @@ def optimise_lr(X_train, y_train, n_jobs=-1, n_iter=20):
     from scipy.stats import loguniform
 
     param_dist = {
-        "C": loguniform(0.01, 20),
+        "C": loguniform(0.1, 10),
         "penalty": ["l1", "l2"],
         "class_weight": [None, "balanced"],
     }
@@ -103,7 +128,7 @@ def optimise_nb_lr(X_train, y_train, use_gpu=False, n_jobs=-1, n_iter=30):
     from scipy.stats import loguniform, uniform
 
     param_dist = {
-        "C": loguniform(0.01, 20),       # log-uniform in [0.01, 20]
+        "C": loguniform(0.1, 10),        # log-uniform in [0.1, 10]
         "alpha": [0.1, 0.5, 1.0, 2.0],
         "l1_ratio": [0.0, 1.0],
         "class_weight": [None, "balanced"],
@@ -274,11 +299,30 @@ def main():
             clf = optimise_nb_lr(X_train, y_train, use_gpu=args.use_gpu)
         else:
             clf = optimise_lr(X_train, y_train)
+        proba = clf.predict_proba(X_test)
         y_pred = clf.predict(X_test)
         print("\n--- Optimised model on held-out test set ---")
         print(classification_report(y_test, y_pred, target_names=label_names, zero_division=0))
         print("Confusion matrix:")
         print(confusion_matrix(y_test, y_pred))
+
+        print("\nConfidence metrics (test set):")
+        max_proba = proba.max(axis=1)
+        print(f"  Mean confidence:   {max_proba.mean():.4f}")
+        print(f"  Median confidence: {np.median(max_proba):.4f}")
+        print(f"  Low confidence (<0.5):  {(max_proba < 0.5).sum()} samples ({(max_proba < 0.5).mean():.1%})")
+        print(f"  High confidence (>0.9): {(max_proba > 0.9).sum()} samples ({(max_proba > 0.9).mean():.1%})")
+        n_classes = len(label_names)
+        ll = log_loss(y_test, proba, labels=list(range(n_classes)))
+        print(f"  Log loss:          {ll:.4f}")
+        if n_classes == 2:
+            bs = brier_score_loss(y_test, proba[:, 1])
+            print(f"  Brier score:       {bs:.4f}")
+        print("\n  Per-class mean confidence (when predicted as that class):")
+        for i, name in enumerate(label_names):
+            mask = y_pred == i
+            if mask.sum() > 0:
+                print(f"    {name:12s}: {proba[mask, i].mean():.4f}  (n={mask.sum()})")
     else:
         if args.nb_weighted:
             clf = _make_nb_lr(C=args.C, alpha=args.nb_alpha,

@@ -104,7 +104,7 @@ class NBWeightedLR(BaseEstimator, ClassifierMixin):
             return cuLR(
                 C=self.C,
                 penalty=penalty,
-                max_iter=1000,
+                max_iter=4000,
                 class_weight=self.class_weight,
             )
         penalty = "l1" if self.l1_ratio == 1.0 else "l2"
