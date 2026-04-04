@@ -269,7 +269,6 @@ def main():
 
     # Downsampling
     if args.downsample:
-        import numpy as np
         downsample_df = pd.DataFrame({"text": X_train_t.values, "label": y_train})
         min_count = pd.Series(y_train).value_counts().min()
         print(f"Downsampling each class to {min_count:,} rows...")
