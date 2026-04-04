@@ -1,5 +1,6 @@
 """
 Logistic Regression training, ablations, and hyperparameter optimisation.
+Supports plain LR and NB-weighted LR (Wang & Manning, ACL 2012).
 """
 
 import argparse
@@ -8,17 +9,15 @@ from pathlib import Path
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import StratifiedKFold, cross_val_score, GridSearchCV
+from sklearn.model_selection import StratifiedKFold, cross_val_score, RandomizedSearchCV
 from sklearn.metrics import classification_report, confusion_matrix
 
 from scripts.common import preprocess_text, build_features, transform_features
+from scripts.lr.nb_weighted import NBWeightedLR
 
 
 def _make_lr(C=1.0, l1_ratio=0.0, class_weight=None):
-    """Return a LogisticRegression using the sklearn >=1.8 API.
-
-    l1_ratio=0.0 → L2,  l1_ratio=1.0 → L1.
-    """
+    """Return a plain LogisticRegression."""
     return LogisticRegression(
         C=C,
         l1_ratio=l1_ratio,
@@ -29,18 +28,25 @@ def _make_lr(C=1.0, l1_ratio=0.0, class_weight=None):
     )
 
 
+def _make_nb_lr(C=1.0, alpha=1.0, l1_ratio=0.0, class_weight=None, use_gpu=False):
+    """Return an NB-weighted LogisticRegression."""
+    return NBWeightedLR(
+        C=C,
+        alpha=alpha,
+        l1_ratio=l1_ratio,
+        class_weight=class_weight,
+        use_gpu=use_gpu,
+    )
+
+
 def train_and_evaluate(
     X_train, y_train, X_test, y_test,
-    C=1.0,
-    l1_ratio=0.0,
-    class_weight=None,
+    clf,
     label_names=None,
 ):
-    """Fit LR, run 5-fold CV on train, then evaluate on held-out test set."""
-    clf = _make_lr(C=C, l1_ratio=l1_ratio, class_weight=class_weight)
-    penalty_label = "l1" if l1_ratio == 1.0 else ("elasticnet" if 0 < l1_ratio < 1 else "l2")
-
-    print(f"\nLR (C={C}, penalty={penalty_label}, class_weight={class_weight}): 5-fold CV")
+    """5-fold CV on train set, then evaluate on held-out test set."""
+    print(f"\n{clf.__class__.__name__} config: {clf.get_params()}")
+    print("Running 5-fold CV...")
     cv_scores = cross_val_score(
         clf, X_train, y_train,
         cv=StratifiedKFold(5, shuffle=True, random_state=42),
@@ -58,47 +64,71 @@ def train_and_evaluate(
     return clf
 
 
-def optimise(X_train, y_train, n_jobs=-1):
-    """GridSearchCV over C, l1_ratio, and class_weight. Returns best estimator.
+def optimise_lr(X_train, y_train, n_jobs=-1, n_iter=20):
+    """RandomizedSearchCV over C, l1_ratio, and class_weight for plain LR."""
+    from scipy.stats import loguniform
 
-    l1_ratio=0.0 → L2,  l1_ratio=1.0 → L1.
-    saga solver supports both natively.
-    """
-    param_grid = {
-        "C": [0.01, 0.1, 1.0, 5.0, 10.0],
-        "l1_ratio": [0.0, 1.0],          # 0 = L2, 1 = L1
+    param_dist = {
+        "C": loguniform(0.01, 20),
+        "l1_ratio": [0.0, 1.0],
         "class_weight": [None, "balanced"],
     }
-
     base = LogisticRegression(solver="saga", max_iter=1000, random_state=42)
     cv = StratifiedKFold(5, shuffle=True, random_state=42)
-
-    search = GridSearchCV(
-        base,
-        param_grid,
-        cv=cv,
-        scoring="f1_macro",
-        n_jobs=n_jobs,
-        verbose=1,
-        refit=True,
-    )
-    print("\nRunning GridSearchCV...")
+    search = RandomizedSearchCV(base, param_dist, n_iter=n_iter, cv=cv,
+                                scoring="f1_macro", n_jobs=n_jobs,
+                                verbose=1, refit=True, random_state=42)
+    print(f"\nRunning RandomizedSearchCV (plain LR, {n_iter} iterations)...")
     search.fit(X_train, y_train)
-
     best = search.best_params_
     penalty_label = "l1" if best["l1_ratio"] == 1.0 else "l2"
-    print(f"\nBest params:   C={best['C']}, penalty={penalty_label}, class_weight={best['class_weight']}")
+    print(f"\nBest params:   C={best['C']:.4f}, penalty={penalty_label}, class_weight={best['class_weight']}")
+    print(f"Best CV macro F1: {search.best_score_:.4f}")
+    return search.best_estimator_
+
+
+def optimise_nb_lr(X_train, y_train, use_gpu=False, n_jobs=-1, n_iter=30):
+    """RandomizedSearchCV over C, alpha, l1_ratio, and class_weight for NB-weighted LR.
+
+    Uses RandomizedSearchCV (not Grid) — 30 random combos instead of all 64,
+    roughly 2-3x faster with negligible quality loss.
+    GPU mode (use_gpu=True) sets n_jobs=1 since cuML manages its own parallelism.
+    """
+    from scipy.stats import loguniform, uniform
+
+    param_dist = {
+        "C": loguniform(0.01, 20),       # log-uniform in [0.01, 20]
+        "alpha": [0.1, 0.5, 1.0, 2.0],
+        "l1_ratio": [0.0, 1.0],
+        "class_weight": [None, "balanced"],
+        "use_gpu": [use_gpu],
+    }
+    base = NBWeightedLR()
+    cv = StratifiedKFold(5, shuffle=True, random_state=42)
+    _n_jobs = 1 if use_gpu else n_jobs   # cuML owns the GPU; don't fork processes
+    search = RandomizedSearchCV(
+        base, param_dist, n_iter=n_iter, cv=cv,
+        scoring="f1_macro", n_jobs=_n_jobs,
+        verbose=1, refit=True, random_state=42,
+    )
+    print(f"\nRunning RandomizedSearchCV (NB-weighted LR, {n_iter} iterations, GPU={use_gpu})...")
+    search.fit(X_train, y_train)
+    best = search.best_params_
+    print(f"\nBest params:   C={best['C']:.4f}, alpha={best['alpha']}, "
+          f"l1_ratio={best['l1_ratio']}, class_weight={best['class_weight']}")
     print(f"Best CV macro F1: {search.best_score_:.4f}")
     return search.best_estimator_
 
 
 def main():
-    parser = argparse.ArgumentParser(description="LR ablations and optimisation")
+    parser = argparse.ArgumentParser(description="LR / NB-weighted LR training and optimisation")
     parser.add_argument("--train", required=True, help="Path to training split CSV")
     parser.add_argument("--test", required=True, help="Path to test split CSV")
     parser.add_argument("--use-stemming", action="store_true")
     parser.add_argument("--use-lemmatization", action="store_true")
     parser.add_argument("--use-bigrams", action="store_true")
+    parser.add_argument("--use-trigrams", action="store_true",
+                        help="Extend word n-grams to (1,3); supersedes --use-bigrams")
     parser.add_argument("--use-char-ngrams", action="store_true")
     parser.add_argument("--remove-negation", action="store_true")
     parser.add_argument(
@@ -121,16 +151,35 @@ def main():
         "--optimise", action="store_true",
         help="Run GridSearchCV over C, penalty, and class_weight",
     )
+    # NB-weighted options
+    parser.add_argument(
+        "--nb-weighted", action="store_true",
+        help="Use NB-weighted Logistic Regression (Wang & Manning 2012)",
+    )
+    parser.add_argument(
+        "--nb-alpha", type=float, default=1.0,
+        help="Laplace smoothing for NB log-count ratios (default: 1.0)",
+    )
+    parser.add_argument(
+        "--use-gpu", action="store_true",
+        help="Use cuML GPU-accelerated LR (requires RAPIDS cuML). "
+             "Has no effect on plain sklearn LR.",
+    )
     parser.add_argument("--save-model", default="models/lr_model.pkl")
     args = parser.parse_args()
 
     # Config summary
     print("=" * 60)
-    print("  LR Experiment Config")
+    print(f"  {'NB-weighted LR' if args.nb_weighted else 'LR'} Experiment Config")
     print("=" * 60)
+    print(f"  NB-weighted:     {args.nb_weighted}")
+    if args.nb_weighted:
+        print(f"  NB alpha:        {args.nb_alpha}")
+        print(f"  GPU (cuML):      {args.use_gpu}")
     print(f"  Stemming:        {args.use_stemming}")
     print(f"  Lemmatization:   {args.use_lemmatization}")
     print(f"  Bigrams:         {args.use_bigrams}")
+    print(f"  Trigrams:        {args.use_trigrams}")
     print(f"  Char n-grams:    {args.use_char_ngrams}")
     print(f"  Negation:        {not args.remove_negation}")
     print(f"  Penalty:         {args.penalty}")
@@ -173,53 +222,64 @@ def main():
     )
 
     X_train_t = train_df["processed"]
-    y_train = train_df["sentiment"]
+    y_train = train_df["sentiment"].values
     X_test_t = test_df["processed"]
-    y_test = test_df["sentiment"]
+    y_test = test_df["sentiment"].values
 
     if args.remove_neutral:
-        y_train = y_train.map({0: 0, 2: 1})
-        y_test = y_test.map({0: 0, 2: 1})
+        y_train = (y_train == 2).astype(int)  # 0=neg, 1=pos
+        y_test = (y_test == 2).astype(int)
 
     print(f"Train: {len(train_df):,d}  Test: {len(test_df):,d}")
 
     # Downsampling
     if args.downsample:
-        downsample_df = pd.DataFrame({"text": X_train_t.values, "label": y_train.values})
-        min_count = downsample_df["label"].value_counts().min()
+        import numpy as np
+        downsample_df = pd.DataFrame({"text": X_train_t.values, "label": y_train})
+        min_count = pd.Series(y_train).value_counts().min()
         print(f"Downsampling each class to {min_count:,} rows...")
         parts = [
-            group.sample(n=min_count, random_state=42)
-            for _, group in downsample_df.groupby("label")
+            downsample_df[downsample_df["label"] == c].sample(n=min_count, random_state=42)
+            for c in sorted(downsample_df["label"].unique())
         ]
         balanced = pd.concat(parts, ignore_index=True)
         X_train_t = balanced["text"]
-        y_train = balanced["label"]
+        y_train = balanced["label"].values
 
     # Build TF-IDF features
     print("Building TF-IDF features...")
     X_train, vectorizers = build_features(
         X_train_t,
         use_bigrams=args.use_bigrams,
+        use_trigrams=args.use_trigrams,
         use_char_ngrams=args.use_char_ngrams,
     )
     X_test = transform_features(X_test_t, vectorizers)
     print(f"Feature matrix: {X_train.shape[0]:,d} rows × {X_train.shape[1]:,d} features")
 
+    l1_ratio = 1.0 if args.penalty == "l1" else 0.0
+
     if args.optimise:
-        clf = optimise(X_train, y_train)
+        if args.nb_weighted:
+            clf = optimise_nb_lr(X_train, y_train, use_gpu=args.use_gpu)
+        else:
+            clf = optimise_lr(X_train, y_train)
         y_pred = clf.predict(X_test)
         print("\n--- Optimised model on held-out test set ---")
         print(classification_report(y_test, y_pred, target_names=label_names, zero_division=0))
         print("Confusion matrix:")
         print(confusion_matrix(y_test, y_pred))
     else:
-        l1_ratio = 1.0 if args.penalty == "l1" else 0.0
+        if args.nb_weighted:
+            clf = _make_nb_lr(C=args.C, alpha=args.nb_alpha,
+                              l1_ratio=l1_ratio, class_weight=args.class_weight,
+                              use_gpu=args.use_gpu)
+        else:
+            clf = _make_lr(C=args.C, l1_ratio=l1_ratio, class_weight=args.class_weight)
+
         clf = train_and_evaluate(
             X_train, y_train, X_test, y_test,
-            C=args.C,
-            l1_ratio=l1_ratio,
-            class_weight=args.class_weight,
+            clf=clf,
             label_names=label_names,
         )
 

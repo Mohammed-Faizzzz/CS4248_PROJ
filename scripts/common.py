@@ -121,16 +121,21 @@ def preprocess_text(
     return " ".join(tokens)
 
 
-def build_features(texts, use_bigrams=False, use_char_ngrams=False, max_features=80_000):
+def build_features(texts, use_bigrams=False, use_trigrams=False, use_char_ngrams=False, max_features=80_000):
     """Fit TF-IDF vectoriser(s) on *texts* and return (X, vectorizers)."""
     vectorizers = []
 
-    ngram_range = (1, 2) if use_bigrams else (1, 1)
+    if use_trigrams:
+        ngram_range = (1, 3)
+    elif use_bigrams:
+        ngram_range = (1, 2)
+    else:
+        ngram_range = (1, 1)
     word_vec = TfidfVectorizer(
         ngram_range=ngram_range,
         max_features=max_features,
         sublinear_tf=True,
-        min_df=3,
+        min_df=2,
         max_df=0.95,
         strip_accents="unicode",
     )
@@ -144,7 +149,7 @@ def build_features(texts, use_bigrams=False, use_char_ngrams=False, max_features
             ngram_range=(3, 5),
             max_features=50_000,
             sublinear_tf=True,
-            min_df=3,
+            min_df=2,
         )
         X_char = char_vec.fit_transform(texts)
         vectorizers.append(("char_tfidf", char_vec))
