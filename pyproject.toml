@@ -1,0 +1,15 @@
+[project]
+name = "cs4248-proj"
+version = "0.1.0"
+description = "Persona-specific sentiment divergence on Elon Musk tweets"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "nltk>=3.9.3",
+    "pandas>=3.0.1",
+    "scikit-learn>=1.8.0",
+    "scipy>=1.17.1",
+    "torch>=2.11.0",
+    "tqdm>=4.67.3",
+    "transformers>=5.5.0",
+]
