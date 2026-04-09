@@ -11,6 +11,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -280,34 +281,21 @@ def feature_divergence_breakdown(
     return pd.DataFrame(rows).sort_values("delta_agreement", ascending=True)
 
 
-# Markdown helpers
-
-def _md_table(df: pd.DataFrame) -> str:
-    """Render a DataFrame as a GitHub-flavoured markdown table."""
-    cols = list(df.columns)
-    header = "| " + " | ".join(str(c) for c in cols) + " |"
-    sep    = "| " + " | ".join("---" for _ in cols) + " |"
-    rows   = []
-    for _, row in df.iterrows():
-        rows.append("| " + " | ".join(str(v) for v in row) + " |")
-    return "\n".join([header, sep] + rows)
-
-
 def _md_matrix(names: list[str], matrix: dict, fmt: str = ".4f") -> str:
-    """Render a symmetric named matrix as a markdown table."""
-    header = "| |" + "".join(f" `{n}` |" for n in names)
-    sep    = "|---|" + "---|" * len(names)
-    rows   = []
+    """Render a symmetric named matrix as a markdown table via tabulate."""
+    rows = []
     for a in names:
-        row = f"| `{a}` |"
+        row = [f"`{a}`"]
         for b in names:
             if a == b:
-                row += " — |"
+                row.append("—")
             else:
                 key = (min(a, b), max(a, b))
-                row += f" {matrix[key]:{fmt}} |"
+                row.append(f"{matrix[key]:{fmt}}")
         rows.append(row)
-    return "\n".join([header, sep] + rows)
+    headers = [""] + [f"`{n}`" for n in names]
+    
+    return tabulate(rows, headers=headers, tablefmt="pipe")
 
 
 # Main
@@ -397,7 +385,7 @@ def main():
             "macro_f1": f"{f1:.4f}",
             "ece": f"{ece:.4f}" if not np.isnan(ece) else "N/A",
         })
-    lines += [_md_table(pd.DataFrame(perf_rows)), ""]
+    lines += [pd.DataFrame(perf_rows).to_markdown(index=False, tablefmt="pipe"), ""]
 
     # Per-model classification reports in collapsible blocks
     lines += ["### Full Classification Reports", ""]
@@ -446,7 +434,7 @@ def main():
             "p-value":   f"{res['p_value']:.4e}",
             "significant (p<0.05)": "yes" if res["p_value"] < 0.05 else "no",
         })
-    lines += [_md_table(pd.DataFrame(mcn_rows)), ""]
+    lines += [pd.DataFrame(mcn_rows).to_markdown(index=False, tablefmt="pipe"), ""]
 
     # ── Error overlap ────────────────────────────────────────────────────────
     lines += ["## Error Overlap", ""]
@@ -462,7 +450,7 @@ def main():
             "total-a errors": eo["errors_a_total"],
             "total-b errors": eo["errors_b_total"],
         })
-    lines += [_md_table(pd.DataFrame(eo_rows)), ""]
+    lines += [pd.DataFrame(eo_rows).to_markdown(index=False, tablefmt="pipe"), ""]
 
     # ── Per-pair detail sections ─────────────────────────────────────────────
     lines += ["## Per-Pair Details", ""]
@@ -475,23 +463,20 @@ def main():
         pca_rows = [{"class": cls, "n": s["count"],
                      "agreement": f"{s['agreement']:.4f}"}
                     for cls, s in pca.items()]
-        lines += ["**Per-class agreement**", "", _md_table(pd.DataFrame(pca_rows)), ""]
+        lines += ["**Per-class agreement**", "",
+                  pd.DataFrame(pca_rows).to_markdown(index=False, tablefmt="pipe"), ""]
 
         # Cross-tabulation
         ct = disagreement_confusion(pa, pb, LABEL_NAMES)
-        ct_header = f"| `{a}` \\ `{b}` |" + "".join(f" {c} |" for c in ct.columns)
-        ct_sep    = "|---|" + "---|" * len(ct.columns)
-        ct_rows   = [ct_header, ct_sep]
-        for idx, row_data in ct.iterrows():
-            ct_rows.append(f"| **{idx}** |" + "".join(f" {v} |" for v in row_data))
+        ct.index.name = f"{a} \\ {b}"
         lines += [f"**Prediction cross-tabulation** (`{a}` rows × `{b}` cols)",
-                  "", "\n".join(ct_rows), ""]
+                  "", ct.to_markdown(tablefmt="pipe"), ""]
 
         # Linguistic feature breakdown
         bd = feature_divergence_breakdown(feat_df, pa, pb, gold,
                                           name_a=a, name_b=b)
         lines += ["**Linguistic feature divergence** (sorted by Δagreement ↑ = hurts most)",
-                  "", _md_table(bd), ""]
+                  "", bd.to_markdown(index=False, tablefmt="pipe"), ""]
 
     # ── Write report ─────────────────────────────────────────────────────────
     report_path = out / "report.md"
