@@ -100,3 +100,45 @@ Minimal cleaning applied before tokenization: URL removal, @mention removal, whi
 | negative | 0 |
 | neutral | 1 |
 | positive | 2 |
+
+## Model predictions convention
+
+All per-model prediction files live in `model_predictions/` and are discovered automatically by `scripts/divergence_analysis.py`. The filename stem becomes the model name in all reports.
+
+**Naming:** `{model_name}.csv` — lowercase, underscores for spaces.
+
+| Example filename | Model |
+|------------------|-------|
+| `roberta.csv` | Fine-tuned RoBERTa |
+| `weighted_nb_lr.csv` | Weighted NB + LR ensemble |
+| `nb.csv` | Naïve Bayes |
+| `lr.csv` | Logistic Regression |
+| `lstm.csv` | LSTM |
+| `bilstm.csv` | Bidirectional LSTM |
+| `bilstm_attention.csv` | BiLSTM + Attention |
+| `svm.csv` | SVM |
+
+**Required columns** (rows must align with the annotations CSV row-for-row):
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `pred` | int | Predicted class index (0 = negative, 1 = neutral, 2 = positive) |
+| `prob_negative` | float | Predicted probability for negative |
+| `prob_neutral` | float | Predicted probability for neutral |
+| `prob_positive` | float | Predicted probability for positive |
+| `confidence` | float | Max class probability (i.e. `max(prob_*)`) |
+
+The `prob_*` and `confidence` columns are optional — if absent, JS divergence and ECE will be skipped for that model.
+
+**Running the analysis:**
+
+```bash
+python -m scripts.divergence_analysis \
+  --annotations datasets/elon_annotated.csv \
+  --predictions-dir model_predictions \
+  --output-dir results/divergence
+```
+
+Output files in `results/divergence/`:
+- `report.md` — full all-pairs markdown report
+- `disagreements_{a}_vs_{b}.csv` — per-pair rows where models disagree
