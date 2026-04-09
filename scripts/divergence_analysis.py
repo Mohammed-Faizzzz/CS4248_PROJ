@@ -242,6 +242,8 @@ def feature_divergence_breakdown(
     preds_a: np.ndarray,
     preds_b: np.ndarray,
     gold: np.ndarray,
+    name_a: str = "model_a",
+    name_b: str = "model_b",
 ) -> pd.DataFrame:
     """
     For each linguistic feature, compute agreement and F1 for tweets
@@ -270,217 +272,244 @@ def feature_divergence_breakdown(
             "agreement": round(agree_with, 4),
             "agreement_without": round(agree_without, 4) if agree_without is not None else None,
             "delta_agreement": round(agree_with - agree_without, 4) if agree_without is not None else None,
-            "f1_feature_model": round(f1_a, 4),
-            "f1_roberta": round(f1_b, 4),
-            "f1_delta": round(f1_b - f1_a, 4),
+            f"f1_{name_a}": round(f1_a, 4),
+            f"f1_{name_b}": round(f1_b, 4),
+            "f1_delta (b-a)": round(f1_b - f1_a, 4),
         })
 
     return pd.DataFrame(rows).sort_values("delta_agreement", ascending=True)
 
 
+# Markdown helpers
+
+def _md_table(df: pd.DataFrame) -> str:
+    """Render a DataFrame as a GitHub-flavoured markdown table."""
+    cols = list(df.columns)
+    header = "| " + " | ".join(str(c) for c in cols) + " |"
+    sep    = "| " + " | ".join("---" for _ in cols) + " |"
+    rows   = []
+    for _, row in df.iterrows():
+        rows.append("| " + " | ".join(str(v) for v in row) + " |")
+    return "\n".join([header, sep] + rows)
+
+
+def _md_matrix(names: list[str], matrix: dict, fmt: str = ".4f") -> str:
+    """Render a symmetric named matrix as a markdown table."""
+    header = "| |" + "".join(f" `{n}` |" for n in names)
+    sep    = "|---|" + "---|" * len(names)
+    rows   = []
+    for a in names:
+        row = f"| `{a}` |"
+        for b in names:
+            if a == b:
+                row += " — |"
+            else:
+                key = (min(a, b), max(a, b))
+                row += f" {matrix[key]:{fmt}} |"
+        rows.append(row)
+    return "\n".join([header, sep] + rows)
+
+
 # Main
 
 def main():
-    parser = argparse.ArgumentParser(description="Divergence analysis")
+    parser = argparse.ArgumentParser(description="All-pairs divergence analysis")
     parser.add_argument("--annotations", required=True,
-                        help="CSV with columns: text, clean_text, label")
-    parser.add_argument("--feature-preds", required=True,
-                        help="Pre-computed feature model predictions CSV "
-                             "(from scripts.analysis.predict)")
-    parser.add_argument("--roberta-preds", required=True,
-                        help="Pre-computed RoBERTa predictions CSV "
-                             "(from scripts.analysis.predict)")
-    parser.add_argument("--feature-model-name", default="NB",
-                        choices=["NB", "LR"],
-                        help="Name of the feature-based model (for labels)")
+                        help="CSV with columns: text, label (and optionally clean_text)")
+    parser.add_argument("--predictions-dir", default="model_predictions",
+                        help="Directory of per-model prediction CSVs "
+                             "(see README for naming convention)")
     parser.add_argument("--output-dir", default="results/divergence")
     parser.add_argument("--text-col", default="text",
-                        help="Raw text column (for linguistic tagging)")
+                        help="Raw text column (used for linguistic feature tagging)")
     parser.add_argument("--label-col", default="label",
-                        help="Gold label column")
+                        help="Gold label column (integer 0/1/2)")
     args = parser.parse_args()
 
     out = Path(args.output_dir)
     out.mkdir(parents=True, exist_ok=True)
+    pred_dir = Path(args.predictions_dir)
 
-    fm = args.feature_model_name
-
-    # Load annotations and predictions
+    # ── Load annotations ────────────────────────────────────────────────────
     print("Loading annotations...")
     df = pd.read_csv(args.annotations)
     texts_raw = df[args.text_col]
     gold = df[args.label_col].values
-
-    print(f"  Tweets: {len(df)}")
+    n = len(df)
+    print(f"  Tweets: {n}")
     print(f"  Label distribution: {dict(Counter(gold))}")
 
-    feature_df_in = pd.read_csv(args.feature_preds)
-    roberta_df_in = pd.read_csv(args.roberta_preds)
-    
-    feature_preds = feature_df_in["pred"].values
-    roberta_preds = roberta_df_in["pred"].values
-    
-    # Load probabilities and confidence if available
-    prob_cols = ["prob_negative", "prob_neutral", "prob_positive"]
-    has_probs = all(c in feature_df_in.columns for c in prob_cols) and all(c in roberta_df_in.columns for c in prob_cols)
-    
-    if has_probs:
-        feature_probs = feature_df_in[prob_cols].values
-        roberta_probs = roberta_df_in[prob_cols].values
-        feature_conf = feature_df_in["confidence"].values
-        roberta_conf = roberta_df_in["confidence"].values
-    else:
-        feature_probs = roberta_probs = feature_conf = roberta_conf = None
- 
-    assert len(feature_preds) == len(gold), (
-        f"Feature preds ({len(feature_preds)}) != annotations ({len(gold)})"
-    )
-    assert len(roberta_preds) == len(gold), (
-        f"RoBERTa preds ({len(roberta_preds)}) != annotations ({len(gold)})"
-    )
+    # ── Discover and load model predictions ─────────────────────────────────
+    pred_files = sorted(pred_dir.glob("*.csv"))
+    if not pred_files:
+        raise FileNotFoundError(f"No CSV files found in {pred_dir}")
 
-    # Individual model performance
-    print(f"\n{'=' * 60}")
-    print(f"  {fm} Performance on Elon Tweets")
-    print("=" * 60)
-    print(classification_report(gold, feature_preds,
-                                target_names=LABEL_NAMES, zero_division=0))
-
-    print("=" * 60)
-    print("  RoBERTa Performance on Elon Tweets")
-    print("=" * 60)
-    print(classification_report(gold, roberta_preds,
-                                target_names=LABEL_NAMES, zero_division=0))
-
-    # Divergence metrics
-    print("=" * 60)
-    print("  Divergence Analysis")
-    print("=" * 60)
-
-    agree = agreement_rate(feature_preds, roberta_preds)
-    kappa = cohen_kappa_score(feature_preds, roberta_preds)
-    error_overlap = error_overlap_rate(feature_preds, roberta_preds, gold)
-    per_class = per_class_agreement(feature_preds, roberta_preds, gold, LABEL_NAMES)
-
-    print(f"\n  Agreement rate:     {agree:.4f}")
-    print(f"  Cohen's kappa:      {kappa:.4f}")
-    print(f"\n  Error overlap (Jaccard): {error_overlap['overlap_jaccard']:.4f}")
-    print(f"    {fm}-only errors: {error_overlap['errors_a_only']}")
-    print(f"    RoBERTa-only errors:  {error_overlap['errors_b_only']}")
-    print(f"    Shared errors:        {error_overlap['errors_both']}")
-
-    print("\n  Per-class agreement:")
-    for cls, stats in per_class.items():
-        print(f"    {cls:>10s}: {stats['agreement']:.4f}  (n={stats['count']})")
-
-    mcnemar_res = mcnemars_test(feature_preds, roberta_preds, gold)
-    print(f"\n  McNemar's Test (Statistical Significance of Divergence):")
-    print(f"    Statistic: {mcnemar_res['statistic']:.4f}")
-    print(f"    p-value:   {mcnemar_res['p_value']:.4e}")
-    if mcnemar_res['p_value'] < 0.05:
-        print("    -> The difference in error rates is statistically significant (p < 0.05).")
-    else:
-        print("    -> The difference in error rates is NOT statistically significant.")
-
-    js_val = 0.0
-    ece_feat = 0.0
-    ece_rob = 0.0
-    if has_probs:
-        js_val = average_js_divergence(feature_probs, roberta_probs)
-        ece_feat = expected_calibration_error(feature_preds, feature_conf, gold)
-        ece_rob = expected_calibration_error(roberta_preds, roberta_conf, gold)
-        
-        print(f"\n  Soft Probability Metrics:")
-        print(f"    Average JS Divergence: {js_val:.4f}")
-        print(f"\n  Expected Calibration Error (ECE):")
-        print(f"    {fm} ECE:      {ece_feat:.4f} (lower is better calibrated)")
-        print(f"    RoBERTa ECE: {ece_rob:.4f} (lower is better calibrated)")
-
-    # Cross-tabulation
-    cross_tab = disagreement_confusion(feature_preds, roberta_preds, LABEL_NAMES)
-    print(f"\n  Prediction cross-tabulation ({fm} rows × RoBERTa cols):")
-    print(cross_tab.to_string())
-
-    # Linguistic feature breakdown
-    print(f"\n{'=' * 60}")
-    print("  Linguistic Feature Divergence Breakdown")
-    print("=" * 60)
-
-    feature_df = tag_linguistic_features(texts_raw)
-    breakdown = feature_divergence_breakdown(feature_df, feature_preds,
-                                            roberta_preds, gold)
-
-    print(breakdown.to_string(index=False))
-
-    # Disagreement examples
-    disagree_mask = feature_preds != roberta_preds
-    disagree_df = df[disagree_mask].copy()
-    disagree_df[f"{fm}_pred"] = feature_preds[disagree_mask]
-    disagree_df["roberta_pred"] = roberta_preds[disagree_mask]
-    disagree_df[f"{fm}_pred_label"] = [
-        LABEL_NAMES[p] for p in feature_preds[disagree_mask]
-    ]
-    disagree_df["roberta_pred_label"] = [
-        LABEL_NAMES[p] for p in roberta_preds[disagree_mask]
-    ]
-
-    print(f"\n  Total disagreements: {disagree_mask.sum()} / {len(df)} "
-          f"({disagree_mask.sum() / len(df) * 100:.1f}%)")
-
-    # Save outputs
-    # Full results with predictions
-    results_df = df.copy()
-    results_df[f"{fm}_pred"] = feature_preds
-    results_df["roberta_pred"] = roberta_preds
-    results_df["agree"] = (feature_preds == roberta_preds).astype(int)
-    results_df[f"{fm}_correct"] = (feature_preds == gold).astype(int)
-    results_df["roberta_correct"] = (roberta_preds == gold).astype(int)
-
-    # Add linguistic features
-    for col in feature_df.columns:
-        results_df[f"feat_{col}"] = feature_df[col].values
-
-    results_df.to_csv(out / "full_results.csv", index=False)
-    disagree_df.to_csv(out / "disagreements.csv", index=False)
-    breakdown.to_csv(out / "feature_breakdown.csv", index=False)
-
-    # Summary JSON
-    summary = {
-        "n_tweets": len(df),
-        "feature_model": fm,
-        "agreement_rate": round(agree, 4),
-        "cohens_kappa": round(kappa, 4),
-        "error_overlap": {k: round(v, 4) if isinstance(v, float) else v
-                          for k, v in error_overlap.items()},
-        "per_class_agreement": per_class,
-        "feature_model_metrics": {
-            "accuracy": round(accuracy_score(gold, feature_preds), 4),
-            "macro_f1": round(f1_score(gold, feature_preds, average="macro",
-                                       zero_division=0), 4),
-        },
-        "roberta_metrics": {
-            "accuracy": round(accuracy_score(gold, roberta_preds), 4),
-            "macro_f1": round(f1_score(gold, roberta_preds, average="macro",
-                                       zero_division=0), 4),
-        },
-        "mcnemars_test": mcnemar_res,
-    }
-    
-    if has_probs:
-        summary["soft_metrics"] = {
-            "average_js_divergence": round(js_val, 4),
-            f"{fm}_ece": round(ece_feat, 4),
-            "roberta_ece": round(ece_rob, 4)
+    PROB_COLS = ["prob_negative", "prob_neutral", "prob_positive"]
+    models: dict[str, dict] = {}
+    for fp in pred_files:
+        name = fp.stem
+        mdf = pd.read_csv(fp)
+        has_probs = all(c in mdf.columns for c in PROB_COLS)
+        models[name] = {
+            "preds": mdf["pred"].values,
+            "probs": mdf[PROB_COLS].values if has_probs else None,
+            "conf":  mdf["confidence"].values if has_probs else None,
         }
+        assert len(models[name]["preds"]) == n, (
+            f"{name}: {len(models[name]['preds'])} rows != annotations {n}"
+        )
 
-    with open(out / "summary.json", "w") as f:
-        json.dump(summary, f, indent=2)
+    model_names = list(models.keys())
+    pairs = [(a, b) for i, a in enumerate(model_names)
+             for b in model_names[i + 1:]]
 
-    print(f"\nOutputs saved to {out}/")
-    print(f"  full_results.csv      — all tweets with predictions & features")
-    print(f"  disagreements.csv     — tweets where models disagree")
-    print(f"  feature_breakdown.csv — per-feature divergence stats")
-    print(f"  summary.json          — key metrics")
+    print(f"Loaded {len(model_names)} models: {model_names}")
+    print(f"All-pairs comparisons: {len(pairs)}")
+
+    # ── Linguistic features (computed once) ──────────────────────────────────
+    feat_df = tag_linguistic_features(texts_raw)
+
+    # ── Build markdown report ────────────────────────────────────────────────
+    lines: list[str] = []
+
+    lines += [
+        "# Divergence Analysis Report",
+        "",
+        f"**Dataset:** `{args.annotations}` | **N:** {n}  ",
+        f"**Models:** {', '.join(f'`{m}`' for m in model_names)}  ",
+        "**Label distribution:** " +
+        " | ".join(f"{LABEL_NAMES[i]}: {int((gold == i).sum())}" for i in range(3)),
+        "",
+    ]
+
+    # ── Per-model performance ────────────────────────────────────────────────
+    lines += ["## Model Performance", ""]
+    perf_rows = []
+    for name, m in models.items():
+        preds = m["preds"]
+        acc = accuracy_score(gold, preds)
+        f1  = f1_score(gold, preds, average="macro", zero_division=0)
+        ece = (expected_calibration_error(preds, m["conf"], gold)
+               if m["conf"] is not None else float("nan"))
+        perf_rows.append({
+            "model": f"`{name}`",
+            "accuracy": f"{acc:.4f}",
+            "macro_f1": f"{f1:.4f}",
+            "ece": f"{ece:.4f}" if not np.isnan(ece) else "N/A",
+        })
+    lines += [_md_table(pd.DataFrame(perf_rows)), ""]
+
+    # Per-model classification reports in collapsible blocks
+    lines += ["### Full Classification Reports", ""]
+    for name, m in models.items():
+        report = classification_report(gold, m["preds"],
+                                       target_names=LABEL_NAMES, zero_division=0)
+        lines += [
+            f"<details><summary><code>{name}</code></summary>",
+            "",
+            "```",
+            report.strip(),
+            "```",
+            "",
+            "</details>",
+            "",
+        ]
+
+    # ── Pairwise agreement matrix ────────────────────────────────────────────
+    agree_mat: dict[tuple, float] = {}
+    kappa_mat: dict[tuple, float] = {}
+    js_mat:    dict[tuple, float] = {}
+    for a, b in pairs:
+        key = (a, b)
+        agree_mat[key] = agreement_rate(models[a]["preds"], models[b]["preds"])
+        kappa_mat[key] = cohen_kappa_score(models[a]["preds"], models[b]["preds"])
+        if models[a]["probs"] is not None and models[b]["probs"] is not None:
+            js_mat[key] = average_js_divergence(models[a]["probs"], models[b]["probs"])
+
+    lines += ["## Pairwise Agreement Rate", "", _md_matrix(model_names, agree_mat), ""]
+    lines += ["## Pairwise Cohen's Kappa",  "", _md_matrix(model_names, kappa_mat), ""]
+
+    if js_mat:
+        js_names = [n for n in model_names
+                    if any(k[0] == n or k[1] == n for k in js_mat)]
+        lines += ["## Pairwise JS Divergence (soft probabilities)",
+                  "", _md_matrix(js_names, js_mat), ""]
+
+    # ── McNemar's test ───────────────────────────────────────────────────────
+    lines += ["## McNemar's Test", ""]
+    mcn_rows = []
+    for a, b in pairs:
+        res = mcnemars_test(models[a]["preds"], models[b]["preds"], gold)
+        mcn_rows.append({
+            "pair": f"`{a}` vs `{b}`",
+            "statistic": f"{res['statistic']:.4f}",
+            "p-value":   f"{res['p_value']:.4e}",
+            "significant (p<0.05)": "yes" if res["p_value"] < 0.05 else "no",
+        })
+    lines += [_md_table(pd.DataFrame(mcn_rows)), ""]
+
+    # ── Error overlap ────────────────────────────────────────────────────────
+    lines += ["## Error Overlap", ""]
+    eo_rows = []
+    for a, b in pairs:
+        eo = error_overlap_rate(models[a]["preds"], models[b]["preds"], gold)
+        eo_rows.append({
+            "pair":           f"`{a}` vs `{b}`",
+            "jaccard":        f"{eo['overlap_jaccard']:.4f}",
+            "only-a errors":  eo["errors_a_only"],
+            "only-b errors":  eo["errors_b_only"],
+            "shared errors":  eo["errors_both"],
+            "total-a errors": eo["errors_a_total"],
+            "total-b errors": eo["errors_b_total"],
+        })
+    lines += [_md_table(pd.DataFrame(eo_rows)), ""]
+
+    # ── Per-pair detail sections ─────────────────────────────────────────────
+    lines += ["## Per-Pair Details", ""]
+    for a, b in pairs:
+        pa, pb = models[a]["preds"], models[b]["preds"]
+        lines += [f"### `{a}` vs `{b}`", ""]
+
+        # Per-class agreement
+        pca = per_class_agreement(pa, pb, gold, LABEL_NAMES)
+        pca_rows = [{"class": cls, "n": s["count"],
+                     "agreement": f"{s['agreement']:.4f}"}
+                    for cls, s in pca.items()]
+        lines += ["**Per-class agreement**", "", _md_table(pd.DataFrame(pca_rows)), ""]
+
+        # Cross-tabulation
+        ct = disagreement_confusion(pa, pb, LABEL_NAMES)
+        ct_header = f"| `{a}` \\ `{b}` |" + "".join(f" {c} |" for c in ct.columns)
+        ct_sep    = "|---|" + "---|" * len(ct.columns)
+        ct_rows   = [ct_header, ct_sep]
+        for idx, row_data in ct.iterrows():
+            ct_rows.append(f"| **{idx}** |" + "".join(f" {v} |" for v in row_data))
+        lines += [f"**Prediction cross-tabulation** (`{a}` rows × `{b}` cols)",
+                  "", "\n".join(ct_rows), ""]
+
+        # Linguistic feature breakdown
+        bd = feature_divergence_breakdown(feat_df, pa, pb, gold,
+                                          name_a=a, name_b=b)
+        lines += ["**Linguistic feature divergence** (sorted by Δagreement ↑ = hurts most)",
+                  "", _md_table(bd), ""]
+
+    # ── Write report ─────────────────────────────────────────────────────────
+    report_path = out / "report.md"
+    report_path.write_text("\n".join(lines) + "\n")
+    print(f"\nReport written to {report_path}")
+
+    # Per-pair disagreement CSVs
+    for a, b in pairs:
+        pa, pb = models[a]["preds"], models[b]["preds"]
+        mask = pa != pb
+        d = df[mask].copy()
+        d[f"{a}_pred"]       = pa[mask]
+        d[f"{b}_pred"]       = pb[mask]
+        d[f"{a}_pred_label"] = [LABEL_NAMES[p] for p in pa[mask]]
+        d[f"{b}_pred_label"] = [LABEL_NAMES[p] for p in pb[mask]]
+        d.to_csv(out / f"disagreements_{a}_vs_{b}.csv", index=False)
+
+    print(f"Disagreement CSVs saved to {out}/")
 
 
 if __name__ == "__main__":
