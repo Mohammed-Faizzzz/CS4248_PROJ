@@ -266,6 +266,35 @@ Per-class F1: negative=0.56, neutral=0.58, positive=0.47
 | LSTM (Run 12, GloVe 50d, frozen, weighted loss) | 0.5498 | 0.5425 | 0.3246 |
 | LSTM (Run 13, GloVe 25d, frozen, weighted loss) | 0.5448 | 0.5347 | 0.3172 |
 
+### Run 14 — Augmented dataset (balanced), frozen GloVe 200d, no weighted loss, 20 epochs (checkpoint sweep)
+
+| Epoch | Macro F1 | Accuracy |
+|-------|----------|----------|
+| 1 | 0.4781 | 0.5000 |
+| 2 | 0.5130 | 0.5224 |
+| 3 | 0.4915 | 0.5075 |
+| 4 | 0.5293 | 0.5348 |
+| 5 | 0.5114 | 0.5224 |
+| **6** | **0.5324** | **0.5348** |
+| 7 | 0.4806 | 0.4925 |
+| 8 | 0.5262 | 0.5323 |
+| 9 | 0.5033 | 0.5149 |
+| 10 | 0.5036 | 0.5124 |
+| 11 | 0.4957 | 0.5000 |
+| 12 | 0.5209 | 0.5249 |
+| 13 | 0.5020 | 0.5124 |
+| 14 | 0.5188 | 0.5249 |
+| 15 | 0.5089 | 0.5124 |
+| 16 | 0.5204 | 0.5249 |
+| 17 | 0.5118 | 0.5174 |
+| 18 | 0.5100 | 0.5149 |
+| 19 | 0.4986 | 0.5000 |
+| 20 | 0.4879 | 0.4950 |
+
+Best: Epoch 6 — Macro F1 0.5324, Accuracy 0.5348
+
+**Observations:** Augmented balanced dataset underperforms TSAD best (Run 9: 0.5519) for plain BiLSTM. Results are noisy across epochs with no clear trend — the plain BiLSTM does not benefit from the augmented dataset. TSAD with weighted loss remains the better training setup for this architecture.
+
 ---
 
 ## Key Findings
