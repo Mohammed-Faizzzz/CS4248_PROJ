@@ -1,12 +1,14 @@
 # Data
-data/raw/
-data/processed/
+data/
 
-# Results
-results/
+# Logs
+logs/
 
-# Model artifacts
-models/*.pkl
+# Models
+models/
+
+# Predictions
+predictions/
 
 # Python
 __pycache__/
