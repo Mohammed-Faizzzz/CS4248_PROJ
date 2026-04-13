@@ -75,6 +75,9 @@ uv run python -m scripts.analysis.predict \
     --model-path models/roberta-finetuned \
     --data data/tweets/elon_tweets.csv \
     --output predictions/roberta_preds.csv
+
+# Gemma 4 (on NSCC)
+qsub scripts/llm/predict.pbs
 ```
 
 ## Generate self-attention heatmaps
