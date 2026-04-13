@@ -80,5 +80,5 @@ uv run python -m scripts.analysis.predict \
 ## Generate self-attention heatmaps
 
 ```bash
-uv run --with "git+https://github.com/WING-NUS/IzzyViz.git" python scripts/analysis/attention_visualization.py
+uv run --with "git+https://github.com/WING-NUS/IzzyViz.git" python -m scripts.analysis.attention_visualization
 ```
