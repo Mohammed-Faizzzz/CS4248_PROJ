@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#PBS -N gemma-predict
+#PBS -q normal
+#PBS -l select=1:ngpus=1
+#PBS -l walltime=02:00:00
+#PBS -P personal-xxx
+#PBS -j oe
+#PBS -o logs/gemma-predict.log
+
+set -e
+
+echo "============================================================"
+echo "Job started at: $(date)"
+echo "Running on: $(hostname)"
+echo "============================================================"
+
+cd $PBS_O_WORKDIR
+
+export SCRATCH_DIR="/scratch/users/nus/$USER"
+export HF_HOME="$SCRATCH_DIR/.cache/huggingface"
+mkdir -p "$HF_HOME" "logs" "predictions"
+
+export PIP_CACHE_DIR="$SCRATCH_DIR/.cache/pip"
+export TMPDIR="$SCRATCH_DIR/tmp"
+mkdir -p "$PIP_CACHE_DIR" "$TMPDIR"
+
+module load python/3.10.9
+module load cuda
+
+VENV_DIR="$SCRATCH_DIR/venvs/cs4248-gemma4"
+if [ ! -d "$VENV_DIR" ]; then
+    echo "Creating venv at $VENV_DIR..."
+    python -m venv "$VENV_DIR"
+fi
+source "$VENV_DIR/bin/activate"
+echo "  Python: $(which python) ($(python --version))"
+echo "  Venv: $VENV_DIR"
+
+pip install --upgrade pip
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+pip install scikit-learn pandas accelerate bitsandbytes protobuf sentencepiece pillow
+pip install "transformers>=5.5.0"
+
+echo ""
+echo "Environment:"
+echo "  Python: $(which python)"
+echo "  CUDA: $(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
+echo "  GPU: $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
+echo ""
+
+python -m scripts.analysis.predict \
+    --model-type llm \
+    --model-path google/gemma-4-31B-it \
+    --data data/tweets/elon_tweets_balanced.csv \
+    --text-col clean_txt \
+    --output predictions/gemma4_31b_preds.csv
+
+echo ""
+echo "Job finished at: $(date)"
+echo "Predictions saved to: predictions/gemma4_31b_preds.csv"
+echo ""
+

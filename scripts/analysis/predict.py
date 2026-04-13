@@ -4,6 +4,7 @@ Generate predictions from models on Elon tweets.
 
 import argparse
 import pickle
+import re
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +14,7 @@ from scripts.common import preprocess_text, transform_features
 
 
 LABEL_NAMES = ["negative", "neutral", "positive"]
+LABEL_MAP = {name: i for i, name in enumerate(LABEL_NAMES)}
 
 
 def predict_sklearn(model_path: str, texts: pd.Series) -> tuple:
@@ -76,10 +78,89 @@ def predict_roberta(model_name_or_path: str, texts: list[str],
     return np.array(all_preds), np.array(all_probs)
 
 
+SYSTEM_PROMPT = (
+    "You are a sentiment classifier. Given a tweet, respond with exactly "
+    "one word: positive, negative, or neutral. Do not explain."
+)
+
+
+def _parse_label(text: str) -> int:
+    """Extract sentiment label from raw model output."""
+    t = text.strip().lower()
+    first = re.sub(r"[^a-z]", "", t.split()[0]) if t.split() else ""
+    if first in LABEL_MAP:
+        return LABEL_MAP[first]
+    for name, idx in LABEL_MAP.items():
+        if name in t:
+            return idx
+    return LABEL_MAP["neutral"]
+
+
+def predict_llm(model_id: str, texts: list[str]) -> tuple:
+    """
+    Zero-shot sentiment via LLM.
+    """
+    import torch
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"  Device: {device}")
+
+    load_kwargs = {"device_map": "auto"}
+    load_kwargs["dtype"] = "auto"
+
+    # Load processor and model
+    from transformers import AutoProcessor, AutoModelForCausalLM
+    processor = AutoProcessor.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id, **load_kwargs)
+    
+    model.eval()
+
+    # Predict
+    preds, raw_outputs = [], []
+
+    for i, tweet in enumerate(texts):
+        # Prompt
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user",
+             "content": f"Classify the sentiment of this tweet:\n\n\"{tweet}\"\n\nSentiment:"},
+        ]
+
+        # Process input
+        prompt_text = processor.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False
+        )
+
+        inputs = processor(text=prompt_text, return_tensors="pt").to(model.device)
+        input_len = inputs["input_ids"].shape[-1]
+
+        # Generate output
+        outputs = model.generate(**inputs, max_new_tokens=5)
+
+        new_tokens = outputs[0][input_len:]
+        raw = processor.decode(new_tokens, skip_special_tokens=False)
+
+        parsed = processor.parse_response(raw)
+        raw = str(parsed)
+
+        label = _parse_label(raw)
+        preds.append(label)
+        raw_outputs.append(raw.strip())
+
+        if (i + 1) % 25 == 0 or i == 0:
+            print(f"  [{i+1}/{len(texts)}] \"{tweet[:50]}...\" "
+                  f"-> {raw.strip()} ({LABEL_NAMES[label]})")
+
+    return np.array(preds), raw_outputs
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate prediction CSV")
     parser.add_argument("--model-type", required=True,
-                        choices=["nb", "lr", "roberta"],
+                        choices=["nb", "lr", "roberta", "llm"],
                         help="Type of model to use")
     parser.add_argument("--model-path", required=True,
                         help="Path to saved model or HuggingFace Hub ID")
@@ -100,10 +181,16 @@ def main():
     print(f"Running {args.model_type.upper()} predictions...")
     if args.model_type in ("nb", "lr"):
         preds, probs = predict_sklearn(args.model_path, texts)
-    else:
+    elif args.model_type == "roberta":
         preds, probs = predict_roberta(
             args.model_path, texts.tolist(), args.batch_size
         )
+    elif args.model_type == "llm":
+        raw_texts = texts.tolist()
+        preds, raw_outputs = predict_llm(
+            args.model_path, raw_texts
+        )
+        probs = None
 
     out_df = pd.DataFrame({
         "pred": preds,
@@ -121,3 +208,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
