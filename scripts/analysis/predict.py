@@ -14,7 +14,6 @@ from scripts.common import preprocess_text, transform_features
 
 
 LABEL_NAMES = ["negative", "neutral", "positive"]
-LABEL_MAP = {name: i for i, name in enumerate(LABEL_NAMES)}
 
 
 def predict_sklearn(model_path: str, texts: pd.Series) -> tuple:
@@ -84,21 +83,9 @@ SYSTEM_PROMPT = (
 )
 
 
-def _parse_label(text: str) -> int:
-    """Extract sentiment label from raw model output."""
-    t = text.strip().lower()
-    first = re.sub(r"[^a-z]", "", t.split()[0]) if t.split() else ""
-    if first in LABEL_MAP:
-        return LABEL_MAP[first]
-    for name, idx in LABEL_MAP.items():
-        if name in t:
-            return idx
-    return LABEL_MAP["neutral"]
-
-
 def predict_llm(model_id: str, texts: list[str]) -> tuple:
     """
-    Zero-shot sentiment via LLM.
+    Zero-shot sentiment via LLM using constrained logic extraction.
     """
     import torch
 
@@ -115,8 +102,16 @@ def predict_llm(model_id: str, texts: list[str]) -> tuple:
     
     model.eval()
 
+    # Get token IDs for sentiment labels
+    label_token_ids = {
+        name: processor.tokenizer.encode(name, add_special_tokens=False)[0]
+        for name in LABEL_NAMES
+    }
+    label_id_list = [label_token_ids[name] for name in LABEL_NAMES]
+    print(f"  Label token IDs: {label_token_ids}")
+
     # Predict
-    preds, raw_outputs = [], []
+    preds, all_probs = [], []
 
     for i, tweet in enumerate(texts):
         # Prompt
@@ -135,26 +130,23 @@ def predict_llm(model_id: str, texts: list[str]) -> tuple:
         )
 
         inputs = processor(text=prompt_text, return_tensors="pt").to(model.device)
-        input_len = inputs["input_ids"].shape[-1]
+        
+        with torch.no_grad():
+            output = model(**inputs)
+            next_logits = output.logits[0, -1]
 
-        # Generate output
-        outputs = model.generate(**inputs, max_new_tokens=5)
+            label_logits = next_logits[label_id_list]
+            label_probs = torch.softmax(label_logits, dim=0).float().cpu().numpy()
+            label = int(label_probs.argmax())
 
-        new_tokens = outputs[0][input_len:]
-        raw = processor.decode(new_tokens, skip_special_tokens=False)
-
-        parsed = processor.parse_response(raw)
-        raw = str(parsed)
-
-        label = _parse_label(raw)
         preds.append(label)
-        raw_outputs.append(raw.strip())
+        all_probs.append(label_probs)
 
         if (i + 1) % 25 == 0 or i == 0:
             print(f"  [{i+1}/{len(texts)}] \"{tweet[:50]}...\" "
-                  f"-> {raw.strip()} ({LABEL_NAMES[label]})")
+                  f"-> {LABEL_NAMES[label]} ({label_probs[label]:.3f})")
 
-    return np.array(preds), raw_outputs
+    return np.array(preds), np.array(all_probs)
 
 
 def main():
@@ -187,10 +179,9 @@ def main():
         )
     elif args.model_type == "llm":
         raw_texts = texts.tolist()
-        preds, raw_outputs = predict_llm(
+        preds, probs = predict_llm(
             args.model_path, raw_texts
         )
-        probs = None
 
     out_df = pd.DataFrame({
         "pred": preds,
