@@ -76,3 +76,9 @@ uv run python -m scripts.analysis.predict \
     --data data/tweets/elon_tweets.csv \
     --output predictions/roberta_preds.csv
 ```
+
+## Generate self-attention heatmaps
+
+```bash
+uv run --with "git+https://github.com/WING-NUS/IzzyViz.git" python scripts/analysis/attention_visualization.py
+```
