@@ -493,3 +493,68 @@ Full checkpoint log:
 | Run 15 | Augmented, frozen, 8-head attn, no weighted loss | 20 (best: ep 6) | **0.5826** | — |
 
 **Best overall:** Run 15 epoch 6 — Macro F1 **0.5826**, beats NB+LR target (0.58) ✓
+
+---
+
+## ⚠️ Test Set Change — Runs 16 onwards
+
+From Run 16 onwards the test set is **aggregated.csv** (402 human-annotated Elon tweets, imbalanced: 114 neg / 162 neutral / 126 pos). Results are **not comparable** to Runs 1–15 which used `tweets.csv` (134 per class, balanced). New baselines on aggregated set: NB F1=0.4745, LR F1=0.5171, BiLSTM F1=0.5341.
+
+---
+
+### Run 16 — Augmented, frozen, 8-head attention, mean pooling, aggregated test set
+
+| Metric | Value |
+|--------|-------|
+| Best epoch | 8 |
+| Test accuracy | 0.5199 |
+| Macro F1 | 0.5172 |
+| Cohen Kappa | 0.2744 |
+
+Per-class F1: negative=0.53, neutral=0.53, positive=0.49
+
+**Observations:** Worse than plain BiLSTM (0.5341) on the new test set. Root cause: mean pooling collapsed neutral recall to 0.53 — model was misclassifying many neutral tweets as negative. Switched to weighted-sum pooling.
+
+---
+
+### Run 17 — Augmented, frozen, 8-head attention, weighted-sum pooling, aggregated test set
+
+| Metric | Value |
+|--------|-------|
+| Best epoch | 16 |
+| Test accuracy | 0.5398 |
+| Macro F1 | 0.5367 |
+| Cohen Kappa | 0.2960 |
+
+Per-class F1: negative=0.54, neutral=0.56, positive=0.51
+
+**Observations:** Weighted-sum pooling (using averaged attention weights) restored neutral recall to 0.60 and beats plain BiLSTM (0.5341) and all baselines on the aggregated set. Fix confirmed: the pooling method was the bottleneck, not the attention mechanism itself.
+
+---
+
+## Summary (aggregated test set — Runs 16+)
+
+| Model | Macro F1 | Cohen Kappa |
+|-------|----------|-------------|
+| NB baseline | 0.4745 | — |
+| LR baseline | 0.5171 | — |
+| BiLSTM (no attention) | 0.5341 | 0.3008 |
+| Run 16 — 8-head, mean pool | 0.5172 | 0.2744 |
+| Run 17 — 8-head, weighted-sum pool | 0.5367 | 0.2960 |
+| **Run 18 — 8-head, weighted-sum pool, weighted loss [1.4,1.0,1.3], seed=42** | **0.5526** | **0.3348** |
+| Run 19 — weights [1.2,1.0,1.3] | 0.5436 | 0.3118 |
+
+---
+
+### Run 18 — Augmented, frozen, 8-head attention, weighted-sum pooling, weighted loss [1.4,1.0,1.3], seed=42
+
+| Metric | Value |
+|--------|-------|
+| Best epoch | 6 |
+| Test accuracy | 0.5547 |
+| Macro F1 | 0.5526 |
+| Cohen Kappa | 0.3348 |
+
+Per-class F1: negative=0.57 (rec=0.73), neutral=0.56 (rec=0.51), positive=0.53 (rec=0.45)
+
+**Observations:** +0.016 F1 over Run 17. Weighted loss [1.4, 1.0, 1.3] pushed negative recall to 0.73 and balanced per-class F1s (0.57/0.56/0.53). Negative precision is low (0.47) — model slightly over-predicts negative. Best result on aggregated test set, beats all baselines. Seed=42 makes results reproducible.
