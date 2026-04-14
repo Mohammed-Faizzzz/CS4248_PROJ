@@ -371,7 +371,14 @@ def main():
     ]
 
     # ── Per-model performance ────────────────────────────────────────────────
-    lines += ["## Model Performance", ""]
+    lines += [
+        "## Model Performance",
+        "",
+        "Accuracy and macro-averaged F1 on the annotated tweet set. "
+        "ECE (Expected Calibration Error) measures how well predicted probabilities "
+        "reflect true likelihoods — lower is better calibrated.",
+        "",
+    ]
     perf_rows = []
     for name, m in models.items():
         preds = m["preds"]
@@ -408,23 +415,56 @@ def main():
     kappa_mat: dict[tuple, float] = {}
     js_mat:    dict[tuple, float] = {}
     for a, b in pairs:
-        key = (a, b)
+        key = (min(a, b), max(a, b))
         agree_mat[key] = agreement_rate(models[a]["preds"], models[b]["preds"])
         kappa_mat[key] = cohen_kappa_score(models[a]["preds"], models[b]["preds"])
         if models[a]["probs"] is not None and models[b]["probs"] is not None:
             js_mat[key] = average_js_divergence(models[a]["probs"], models[b]["probs"])
 
-    lines += ["## Pairwise Agreement Rate", "", _md_matrix(model_names, agree_mat), ""]
-    lines += ["## Pairwise Cohen's Kappa",  "", _md_matrix(model_names, kappa_mat), ""]
+    lines += [
+        "## Pairwise Agreement Rate",
+        "",
+        "Fraction of tweets where both models predict the same label. "
+        "1.0 = perfect agreement, 0.0 = no agreement.",
+        "",
+        _md_matrix(model_names, agree_mat),
+        "",
+    ]
+    lines += [
+        "## Pairwise Cohen's Kappa",
+        "",
+        "Agreement rate corrected for chance. "
+        "> 0.6 is generally considered substantial agreement; "
+        "values near 0 indicate agreement no better than random.",
+        "",
+        _md_matrix(model_names, kappa_mat),
+        "",
+    ]
 
     if js_mat:
         js_names = [n for n in model_names
                     if any(k[0] == n or k[1] == n for k in js_mat)]
-        lines += ["## Pairwise JS Divergence (soft probabilities)",
-                  "", _md_matrix(js_names, js_mat), ""]
+        lines += [
+            "## Pairwise JS Divergence (soft probabilities)",
+            "",
+            "Average Jensen-Shannon divergence between each pair's predicted probability "
+            "distributions. Ranges from 0 (identical distributions) to 1 (maximally different). "
+            "Captures disagreement in confidence, not just in the predicted label.",
+            "",
+            _md_matrix(js_names, js_mat),
+            "",
+        ]
 
     # ── McNemar's test ───────────────────────────────────────────────────────
-    lines += ["## McNemar's Test", ""]
+    lines += [
+        "## McNemar's Test",
+        "",
+        "Tests whether two models make errors on *different* subsets of tweets "
+        "(i.e. their error patterns are statistically distinct). "
+        "A significant result (p < 0.05) means the models are not just interchangeable — "
+        "one is correcting errors the other makes.",
+        "",
+    ]
     mcn_rows = []
     for a, b in pairs:
         res = mcnemars_test(models[a]["preds"], models[b]["preds"], gold)
@@ -437,7 +477,15 @@ def main():
     lines += [pd.DataFrame(mcn_rows).to_markdown(index=False, tablefmt="pipe"), ""]
 
     # ── Error overlap ────────────────────────────────────────────────────────
-    lines += ["## Error Overlap", ""]
+    lines += [
+        "## Error Overlap",
+        "",
+        "Jaccard similarity of the two models' error sets (tweets both got wrong vs. "
+        "the union of all errors). High Jaccard means the models tend to fail on the "
+        "same tweets; low Jaccard means their errors are complementary, suggesting "
+        "an ensemble could help.",
+        "",
+    ]
     eo_rows = []
     for a, b in pairs:
         eo = error_overlap_rate(models[a]["preds"], models[b]["preds"], gold)
@@ -453,7 +501,13 @@ def main():
     lines += [pd.DataFrame(eo_rows).to_markdown(index=False, tablefmt="pipe"), ""]
 
     # ── Per-pair detail sections ─────────────────────────────────────────────
-    lines += ["## Per-Pair Details", ""]
+    lines += [
+        "## Per-Pair Details",
+        "",
+        "Detailed breakdown for each model pair: where they agree by class, "
+        "how their predictions cross over, and which linguistic features drive divergence.",
+        "",
+    ]
     for a, b in pairs:
         pa, pb = models[a]["preds"], models[b]["preds"]
         lines += [f"### `{a}` vs `{b}`", ""]
@@ -463,20 +517,37 @@ def main():
         pca_rows = [{"class": cls, "n": s["count"],
                      "agreement": f"{s['agreement']:.4f}"}
                     for cls, s in pca.items()]
-        lines += ["**Per-class agreement**", "",
-                  pd.DataFrame(pca_rows).to_markdown(index=False, tablefmt="pipe"), ""]
+        lines += [
+            "**Per-class agreement** — agreement rate split by gold label, "
+            "showing which sentiment class the two models disagree on most.",
+            "",
+            pd.DataFrame(pca_rows).to_markdown(index=False, tablefmt="pipe"),
+            "",
+        ]
 
         # Cross-tabulation
         ct = disagreement_confusion(pa, pb, LABEL_NAMES)
         ct.index.name = f"{a} \\ {b}"
-        lines += [f"**Prediction cross-tabulation** (`{a}` rows × `{b}` cols)",
-                  "", ct.to_markdown(tablefmt="pipe"), ""]
+        lines += [
+            f"**Prediction cross-tabulation** — rows are `{a}` predictions, "
+            f"columns are `{b}` predictions. Off-diagonal cells are disagreements.",
+            "",
+            ct.to_markdown(tablefmt="pipe"),
+            "",
+        ]
 
         # Linguistic feature breakdown
         bd = feature_divergence_breakdown(feat_df, pa, pb, gold,
                                           name_a=a, name_b=b)
-        lines += ["**Linguistic feature divergence** (sorted by Δagreement ↑ = hurts most)",
-                  "", bd.to_markdown(index=False, tablefmt="pipe"), ""]
+        lines += [
+            "**Linguistic feature divergence** — for each surface feature, "
+            "how much it shifts agreement between the two models (Δagreement) "
+            "and each model's macro-F1 on tweets containing that feature. "
+            "Sorted by Δagreement ascending so the most divergence-inducing features appear first.",
+            "",
+            bd.to_markdown(index=False, tablefmt="pipe"),
+            "",
+        ]
 
     # ── Write report ─────────────────────────────────────────────────────────
     report_path = out / "report.md"
