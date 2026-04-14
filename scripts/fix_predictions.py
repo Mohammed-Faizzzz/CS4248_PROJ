@@ -20,9 +20,16 @@ for fp in sorted(PRED_DIR.glob("*.csv")):
     df = pd.read_csv(fp)
     changed = False
 
+    if "pred" not in df.columns:
+        for alias in ("predicted_label", "pred_label"):
+            if alias in df.columns:
+                df = df.rename(columns={alias: "pred"})
+                changed = True
+                break
+
     if "confidence" not in df.columns:
         prob_cols = df[list(LABEL_TO_COL.values())]
-        col_index = df["pred_label"].map(LABEL_TO_COL)
+        col_index = df["pred"].map(LABEL_TO_COL)
         df["confidence"] = [prob_cols.loc[i, col] for i, col in col_index.items()]
         changed = True
 
