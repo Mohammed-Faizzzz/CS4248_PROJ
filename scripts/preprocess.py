@@ -3,6 +3,7 @@ Preprocessing for datasets.
 """
 
 import re
+import html
 import pandas as pd
 
 def load_tsad(path: str) -> pd.DataFrame:
@@ -64,8 +65,20 @@ def clean_text(text: str) -> str:
     if not isinstance(text, str):
         return ""
     
-    clean = re.sub(r"https?://\S+", "", text)
+    clean = html.unescape(text)
+    clean = clean.replace("\u2018", "'").replace("\u2019", "'")  # curly single quotes
+    clean = clean.replace("\u201c", '"').replace("\u201d", '"')  # curly double quotes
+    clean = re.sub(r"https?://\S+", "", clean)
     clean = re.sub(r"@\w+", "", clean)
+    clean = re.sub(                                              # unicode emoji
+        "[\U0001F600-\U0001F64F"
+        "\U0001F300-\U0001F5FF"
+        "\U0001F680-\U0001F6FF"
+        "\U0001F1E0-\U0001F1FF"
+        "\U00002700-\U000027BF"
+        "\U0001F900-\U0001F9FF]+",
+        "", clean,
+    )
     clean = re.sub(r"\s+", " ", clean).strip()
     clean = re.sub(r"(.)\1{3,}", r"\1\1\1", clean)
     
