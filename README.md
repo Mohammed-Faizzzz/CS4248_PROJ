@@ -5,7 +5,7 @@ Comparing feature-engineered classifiers (Logistic Regression, Naive Bayes) agai
 ## Setup
 
 ```bash
-git clone -b shawn-dev --single-branch https://github.com/Mohammed-Faizzzz/CS4248_PROJ.git
+git clone https://github.com/Mohammed-Faizzzz/CS4248_PROJ.git
 cd CS4248_PROJ
 uv sync
 ```
