@@ -3,4 +3,11 @@ venv/
 .venv/
 __pycache__/
 *.pyc
+*.pkl
 .ipynb_checkpoints/
+.DS_Store
+.claude/
+uv *.lock
+*.md
+*.pdf
+*.tex
