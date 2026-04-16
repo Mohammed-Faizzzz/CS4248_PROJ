@@ -1,19 +1,6 @@
-# Data
-data/
-
-# Logs
-logs/
-
-# Models
-models/
-
-# Predictions
-predictions/
-
-# Python
+model_venv/
+venv/
+.venv/
 __pycache__/
 *.pyc
-.venv/
-
-# OS
-.DS_Store
+.ipynb_checkpoints/

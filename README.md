@@ -1,87 +1,144 @@
-# CS4248 Group Project: Persona-Specific Sentiment Divergence
+---
+license: mit
+language:
+- en
+base_model:
+- FacebookAI/roberta-base
+pipeline_tag: text-classification
+library_name: transformers
+tags:
+- sentiment-analysis
+- roberta
+- text-classification
+- tweets
+---
 
-Comparing feature-engineered classifiers (Logistic Regression, Naive Bayes) against fine-tuned RoBERTa on Elon Musk tweets to quantify and analyze sentiment divergence.
+# Fine-tuned RoBERTa for Tweet Sentiment (3-class)
 
-## Setup
+Fine-tuned [RoBERTa](https://huggingface.co/FacebookAI/roberta-base) for 3-class sentiment classification (negative, neutral, positive) on the Tweet Sentiment Analysis Dataset (TSAD).
 
-```bash
-git clone https://github.com/Mohammed-Faizzzz/CS4248_PROJ.git
-cd CS4248_PROJ
-uv sync
+## Usage
+
+### Pipeline
+
+```python
+from transformers import pipeline
+
+classifier = pipeline(
+    "text-classification",
+    model="shawnnygoh/cs4248-roberta-sentiment",
+)
+
+results = classifier([
+    "This is amazing!",
+    "Okay",
+    "Absolutely terrible experience",
+])
+
+for r in results:
+    print(f"{r['label']}: {r['score']:.4f}")
+# positive: 0.9907
+# neutral: 0.9870
+# negative: 0.9770
 ```
 
-## Data
+### AutoTokenizer + AutoModel
 
-Ensure the following file is in `data/raw/`:
+```python
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-- `tsad.csv` (Tweet Sentiment Analysis Dataset)
+model_name = "shawnnygoh/cs4248-roberta-sentiment"
 
-## Preprocessing data
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name)
+model.eval()
 
-```bash
-# Prepare data splits
-uv run python -m scripts.prepare_splits
+texts = [
+    "Generational trauma. An example of why forgiveness is so important.",
+    "Improved longform posts",
+    "This is the worst thing I've ever seen",
+]
+
+inputs = tokenizer(texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
+
+with torch.no_grad():
+    logits = model(**inputs).logits
+    probs = torch.softmax(logits, dim=-1)
+    preds = torch.argmax(probs, dim=-1)
+
+label_names = ["negative", "neutral", "positive"]
+for text, pred, prob in zip(texts, preds, probs):
+    print(f"{label_names[pred]}: {prob[pred]:.4f} | {text}")
 ```
 
-## Train models
+## Training details
 
-**Naive Bayes:**
+| Parameter | Value |
+|-----------|-------|
+| Base model | `FacebookAI/roberta-base` |
+| Dataset | TSAD (3-class: negative, neutral, positive) |
+| Train/test split | 85% / 15%, stratified |
+| Validation | 15% of train, used for early stopping |
+| Epochs | 10 (early stopping patience: 2) |
+| Batch size | 16 |
+| Learning rate | 1e-5 |
+| Weight decay | 0.01 |
+| Warmup ratio | 0.1 |
+| Max sequence length | 128 |
+| Precision | fp16 |
+| Best model selection | macro F1 on validation set |
+
+## Preprocessing
+
+Minimal cleaning applied before tokenization: URL removal, @mention removal, whitespace normalization, and expressive lengthening collapse (e.g. `s000000` → `s000`).
+
+## Label mapping
+
+| Label | ID |
+|-------|----|
+| negative | 0 |
+| neutral | 1 |
+| positive | 2 |
+
+## Model predictions convention
+
+All per-model prediction files live in `model_predictions/` and are discovered automatically by `scripts/divergence_analysis.py`. The filename stem becomes the model name in all reports.
+
+**Naming:** `{model_name}.csv` — lowercase, underscores for spaces.
+
+| Example filename | Model |
+|------------------|-------|
+| `roberta.csv` | Fine-tuned RoBERTa |
+| `weighted_nb_lr.csv` | Weighted NB + LR ensemble |
+| `nb.csv` | Naïve Bayes |
+| `lr.csv` | Logistic Regression |
+| `lstm.csv` | LSTM |
+| `bilstm.csv` | Bidirectional LSTM |
+| `bilstm_attention.csv` | BiLSTM + Attention |
+| `svm.csv` | SVM |
+
+**Required columns** (rows must align with the annotations CSV row-for-row):
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `pred` | int | Predicted class index (0 = negative, 1 = neutral, 2 = positive) |
+| `prob_negative` | float | Predicted probability for negative |
+| `prob_neutral` | float | Predicted probability for neutral |
+| `prob_positive` | float | Predicted probability for positive |
+| `confidence` | float | Max class probability (i.e. `max(prob_*)`) |
+
+The `prob_*` and `confidence` columns are optional — if absent, JS divergence and ECE will be skipped for that model.
+
+**Running the analysis:**
 
 ```bash
-uv run python -m scripts.nb.train \
-    --train data/splits/train.csv \
-    --test data/splits/test.csv \
-    --use-bigrams \
-    --use-char-ngrams \
-    --downsample \
-    --save-model models/nb_model.pkl
+python -m scripts.divergence_analysis \
+  --annotations datasets/elon_annotated.csv \
+  --predictions-dir model_predictions \
+  --output-dir results/divergence
 ```
 
-**RoBERTa:**
-
-```bash
-qsub scripts/roberta/finetune.pbs
-```
-
-The fine-tuned RoBERTa model is also available on HuggingFace Hub:
-
-```bash
-# Download checkpoint locally
-huggingface-cli download shawnnygoh/cs4248-roberta-sentiment --local-dir models/roberta-finetuned
-```
-
-## Generate predictions
-
-Run each model on the Elon tweets to produce prediction CSVs.
- 
-```bash
-# NB predictions
-uv run python -m scripts.analysis.predict \
-    --model-type nb \
-    --model-path models/nb_model.pkl \
-    --data data/tweets/elon_tweets.csv \
-    --output predictions/nb_preds.csv
- 
-# RoBERTa predictions (from HuggingFace Hub)
-uv run python -m scripts.analysis.predict \
-    --model-type roberta \
-    --model-path shawnnygoh/cs4248-roberta-sentiment \
-    --data data/tweets/elon_tweets.csv \
-    --output predictions/roberta_preds.csv
-
-# RoBERTa predictions (from local path) 
-uv run python -m scripts.analysis.predict \
-    --model-type roberta \
-    --model-path models/roberta-finetuned \
-    --data data/tweets/elon_tweets.csv \
-    --output predictions/roberta_preds.csv
-
-# Gemma 4 (on NSCC)
-qsub scripts/llm/predict.pbs
-```
-
-## Generate self-attention heatmaps
-
-```bash
-uv run --with "git+https://github.com/WING-NUS/IzzyViz.git" python -m scripts.analysis.attention_visualization
-```
+Output files in `results/divergence/`:
+- `report.md` — full all-pairs markdown report
+- `disagreements_{a}_vs_{b}.csv` — per-pair rows where models disagree

@@ -1,0 +1,153 @@
+id,url,fullText,clean_txt,label,logistic_regression_pred,weighted-naive-bayes-lr_pred,logistic_regression_pred_label,weighted-naive-bayes-lr_pred_label
+1.21e+18,https://x.com/elonmusk/status/1208464373225672704,@engineers_feed I try so hard with these jokes!,I try so hard with these jokes!,1,0,2,negative,positive
+1.82e+18,https://x.com/elonmusk/status/1822529113007292522,"@WallStreetSilv Tragically, this is too often true","Tragically, this is too often true",0,2,1,positive,neutral
+1.87e+18,https://x.com/elonmusk/status/1867382157078868416,Your Tesla can now drive you from your house in one complex city to another house in a different complex city,Your Tesla can now drive you from your house in one complex city to another house in a different complex city,1,0,1,negative,neutral
+1.77e+18,https://x.com/elonmusk/status/1769216436273021439,"@WallStreetSilv Yeah, we dodged a lemon 🍋 for sure 😂
+
+He is a beyond entitled and his show is unwatchable.","Yeah, we dodged a lemon for sure He is a beyond entitled and his show is unwatchable.",1,2,1,positive,neutral
+1.78e+18,https://x.com/elonmusk/status/1780376546148327690,"@WholeMarsBlog Not quite betting the company, but going balls to the wall for autonomy is a blindingly obvious move. 
+
+Everything else is like variations on a horse carriage.","Not quite betting the company, but going balls to the wall for autonomy is a blindingly obvious move. Everything else is like variations on a horse carriage.",1,0,1,negative,neutral
+1.23e+18,https://x.com/elonmusk/status/1230439298874343424,"High bay for stacking Starship engine bay, propellant tanks &amp; fairing (fka nosecone) sections is almost done! https://t.co/G9h0430ns2","High bay for stacking Starship engine bay, propellant tanks & fairing (fka nosecone) sections is almost done!",1,0,2,negative,positive
+1.23e+18,https://x.com/elonmusk/status/1230367034397077504,@tesletter In the order that they were written,In the order that they were written,2,0,1,negative,neutral
+1.25e+18,https://x.com/elonmusk/status/1251386583846023171,"@tobyliiiiiiiiii @MichaelCanary02 @Erdayastronaut @dwesterster No, as the header tanks are quite small relative to main (~30 tons vs 1200 tons). Only uses very tip of the nose.","No, as the header tanks are quite small relative to main (~30 tons vs 1200 tons). Only uses very tip of the nose.",2,0,1,negative,neutral
+1.6e+18,https://x.com/elonmusk/status/1603985491505795072,Twitter will start incorporating mute &amp; block signals from Blue Verified (not Legacy Blue) as downvotes,Twitter will start incorporating mute & block signals from Blue Verified (not Legacy Blue) as downvotes,2,0,1,negative,neutral
+1.27e+18,https://x.com/elonmusk/status/1269370365651738624,@MKBHD Big line at the barbershop,Big line at the barbershop,0,2,1,positive,neutral
+1.82e+18,https://x.com/elonmusk/status/1818999906549350663,True or let her deny it,True or let her deny it,2,2,1,positive,neutral
+1.37e+18,https://x.com/elonmusk/status/1367213114228318209,Launch abort on slightly conservative high thrust limit. Increasing thrust limit &amp; recycling propellant for another flight attempt today.,Launch abort on slightly conservative high thrust limit. Increasing thrust limit & recycling propellant for another flight attempt today.,1,0,1,negative,neutral
+1.7e+18,https://x.com/elonmusk/status/1703325625283727504,@cremieuxrecueil Important to stay that way,Important to stay that way,2,1,2,neutral,positive
+1.85e+18,https://x.com/elonmusk/status/1853071386425651582,She wants to break the Constitution,She wants to break the Constitution,0,0,1,negative,neutral
+1.84e+18,https://x.com/elonmusk/status/1842039975107285500,@pmarca @robkhenderson That cycle has happened so many times,That cycle has happened so many times,1,0,1,negative,neutral
+1.65e+18,https://x.com/elonmusk/status/1646953102778552320,@all_in_tok @SFGovTV @theallinpod @DavidSacks @Jason Exactly. Take a walk through downtown around Twitter HQ. Outrageous that city officials would claim that it is not dangerous!,Exactly. Take a walk through downtown around Twitter HQ. Outrageous that city officials would claim that it is not dangerous!,0,0,1,negative,neutral
+1.82e+18,https://x.com/elonmusk/status/1823743685093208169,@TrungTPhan BIG CANDY,BIG CANDY,2,2,1,positive,neutral
+1.58e+18,https://x.com/elonmusk/status/1580600379074523136,"@leehumerian Starlink requires nothing except ~50 Watt power source. With a small solar system plus battery or a generator, you will have connectivity anywhere.","Starlink requires nothing except ~50 Watt power source. With a small solar system plus battery or a generator, you will have connectivity anywhere.",2,2,1,positive,neutral
+1.85e+18,https://x.com/elonmusk/status/1849714158113259968,"@elon_docs Some of the war records of my grandfather (Walter Henry James Musk) can be found on the Internet these days.
+
+He met my English grandmother (Cora Amelia Robinson) when he was transferred to British Intelligence towards the end of the war. https://t.co/cMYiICyWa6",Some of the war records of my grandfather (Walter Henry James Musk) can be found on the Internet these days. He met my English grandmother (Cora Amelia Robinson) when he was transferred to British Intelligence towards the end of the war.,1,0,1,negative,neutral
+1.23e+18,https://x.com/elonmusk/status/1228546082172370944,"@jgrano305 @BLKMDL3 @DMC_Ryan @Jason Depends on when car was built, as there are many small hardware improvements, so most will be somewhere in between 373 &amp; 390","Depends on when car was built, as there are many small hardware improvements, so most will be somewhere in between 373 & 390",1,0,1,negative,neutral
+1.89e+18,https://x.com/elonmusk/status/1890526446583419357,@WesleyHuntTX They call everyone they don’t like a Nazi,They call everyone they don't like a Nazi,0,1,0,neutral,negative
+1.85e+18,https://x.com/elonmusk/status/1851161873816903728,@amuse AOC was like murdered like 17 times at least,AOC was like murdered like 17 times at least,0,2,1,positive,neutral
+1.78e+18,https://x.com/elonmusk/status/1780370067987009711,"Legacy media simply can’t compete with hundreds of millions of humans providing real-time, AI-assisted, interactive information","Legacy media simply can't compete with hundreds of millions of humans providing real-time, AI-assisted, interactive information",0,2,1,positive,neutral
+1.79e+18,https://x.com/elonmusk/status/1786436088875077772,@MarioNawfal White House book burning,White House book burning,0,0,2,negative,positive
+1.66e+18,https://x.com/elonmusk/status/1657204060334989312,"@zerohedge So you’re saying there’s a chance we make it? Yesss 💪!!
+https://t.co/9aMviVhLMD",So you're saying there's a chance we make it? Yesss !!,2,2,1,positive,neutral
+1.7e+18,https://x.com/elonmusk/status/1702285560541331532,"@dwr 🤣
+
+What is up with the press!?
+
+They seem to be extra sour these days. https://t.co/y8dcWSBAux",What is up with the press!? They seem to be extra sour these days.,0,0,1,negative,neutral
+1.53e+18,https://x.com/elonmusk/status/1529631588417421312,"@teslaownersSV @RyanGirdusky @GoodPoliticGuy If birth rates remain unchanged, South Korea will be ~6% of its current population in three generations, with a majority of people over age 60","If birth rates remain unchanged, South Korea will be ~6% of its current population in three generations, with a majority of people over age 60",0,0,1,negative,neutral
+1.91e+18,https://x.com/elonmusk/status/1905292428010979412,She should be fired immediately,She should be fired immediately,0,1,0,neutral,negative
+1.84e+18,https://x.com/elonmusk/status/1841345939061215430,"Also, common sense. 
+
+People need to live somewhere, so unless they move to a town with a lot of extra houses (true in some places, but not all places in America), there will be upward pressure on house prices proportionate to the influx of people.","Also, common sense. People need to live somewhere, so unless they move to a town with a lot of extra houses (true in some places, but not all places in America), there will be upward pressure on house prices proportionate to the influx of people.",1,2,1,positive,neutral
+1.84e+18,https://x.com/elonmusk/status/1843536635797139757,@mazemoore Fake af,Fake af,0,1,0,neutral,negative
+1.82e+18,https://x.com/elonmusk/status/1824897175391735997,"@dvorahfr I’d like to say that it’s always a strength, but there are important exceptions:
+
+1. When empathy towards immigrants who have antithetical and intransigent beliefs leads to civilizational suicide.
+
+2. When there is too much empathy for violent criminals, rather than their","I'd like to say that it's always a strength, but there are important exceptions: 1. When empathy towards immigrants who have antithetical and intransigent beliefs leads to civilizational suicide. 2. When there is too much empathy for violent criminals, rather than their",0,2,0,positive,negative
+9.99e+17,https://x.com/elonmusk/status/999361510915768320,@jaspar Oh hey another sanctimonious media person who thinks he’s above criticism. Try being truthful &amp; the public will believe you again.,Oh hey another sanctimonious media person who thinks he's above criticism. Try being truthful & the public will believe you again.,0,0,1,negative,neutral
+1.63e+18,https://x.com/elonmusk/status/1630654820565614593,"@Erdayastronaut Raptor start is now reliable on the test stand under most conditions. 
+
+Now we’re working on dynamically adapting the start sequence based on increasingly difficult propellant inlet pressures &amp; temps. 
+
+Operating with low pressure, “warm” liquid oxygen is particularly important.","Raptor start is now reliable on the test stand under most conditions. Now we're working on dynamically adapting the start sequence based on increasingly difficult propellant inlet pressures & temps. Operating with low pressure, ""warm"" liquid oxygen is particularly important.",2,0,1,negative,neutral
+1.73e+18,https://x.com/elonmusk/status/1732294278448132424,"@EndWokeness There is only so much hotel space, then what?","There is only so much hotel space, then what?",0,0,1,negative,neutral
+1.74e+18,https://x.com/elonmusk/status/1736303967213068562,Create a Community on 𝕏!,Create a Community on 𝕏!,2,0,1,negative,neutral
+1.73e+18,https://x.com/elonmusk/status/1731991224825819616,"Posts on 𝕏 go viral proportionate to how much time users spend looking at them. 
+
+People obviously spend way more time watching videos on 𝕏 than if they go elsewhere to watch them, so it is best to post things natively here.","Posts on 𝕏 go viral proportionate to how much time users spend looking at them. People obviously spend way more time watching videos on 𝕏 than if they go elsewhere to watch them, so it is best to post things natively here.",2,2,1,positive,neutral
+1.08e+18,https://x.com/elonmusk/status/1081576707365064704,"Starship test vehicle under assembly will look similar to this illustration when finished. Operational Starships would obv have windows, etc. https://t.co/D8AJ01mjyR","Starship test vehicle under assembly will look similar to this illustration when finished. Operational Starships would obv have windows, etc.",1,0,1,negative,neutral
+1.78e+18,https://x.com/elonmusk/status/1776737723770105983,@WallStreetSilv The AP is responsible for more false information than all “anonymous” accounts combined. It’s not even close.,"The AP is responsible for more false information than all ""anonymous"" accounts combined. It's not even close.",0,0,1,negative,neutral
+1.77e+18,https://x.com/elonmusk/status/1772339467002482904,@libsoftiktok When will this madness stop!?,When will this madness stop!?,0,1,0,neutral,negative
+1.45e+18,https://x.com/elonmusk/status/1446535128545693699,@LifeofMikej @TeslaOwnersBC @DriveTeslaca @Tesla @Teslarati There are many small joys as you explore the car &amp; more to come via software updates,There are many small joys as you explore the car & more to come via software updates,2,0,1,negative,neutral
+1.39e+18,https://x.com/elonmusk/status/1385106006141587459,"@ValaAfshar Very important. Most people don’t know this. Wind is also super cheap, especially when paired with batteries.","Very important. Most people don't know this. Wind is also super cheap, especially when paired with batteries.",2,1,0,neutral,negative
+7.51e+17,https://x.com/elonmusk/status/750835746613915648,"@jacobrossi All publicly known Tesla product developments are called out, incl vehicles and batteries. Would be odd *not* to include.","All publicly known Tesla product developments are called out, incl vehicles and batteries. Would be odd *not* to include.",1,0,1,negative,neutral
+1.75e+18,https://x.com/elonmusk/status/1753193317687308342,This could have been your family. It was someone’s family.,This could have been your family. It was someone's family.,0,0,1,negative,neutral
+1.01e+18,https://x.com/elonmusk/status/1008385171744174080,"@leechy3 @kausthav_ray @SpaceX SX 300 &amp; soon SX 500. Kind of a modern version of Inconel superalloys. High strength at temperature, extreme oxidation resistance. Needed for ~800 atmosphere, hot, oxygen-rich turbopump on Raptor rocket engine.","SX 300 & soon SX 500. Kind of a modern version of Inconel superalloys. High strength at temperature, extreme oxidation resistance. Needed for ~800 atmosphere, hot, oxygen-rich turbopump on Raptor rocket engine.",1,0,1,negative,neutral
+1e+18,https://x.com/elonmusk/status/1001857257254993921,"@IndianInterest Actually, Hyperloop draws a near vacuum in tube &amp; each pod is powered w electric motors. It is opposite of pneumatically powered.","Actually, Hyperloop draws a near vacuum in tube & each pod is powered w electric motors. It is opposite of pneumatically powered.",1,0,1,negative,neutral
+1.64e+18,https://x.com/elonmusk/status/1640503312146464768,@GAINNowAmerica Not having a massive short position against Tesla would be a step in the right direction!,Not having a massive short position against Tesla would be a step in the right direction!,2,0,1,negative,neutral
+2.3e+17,https://x.com/elonmusk/status/230490756966662144,"@dansitu Don't know about ""dark manipulators"", but Adbusters played a major role in creating Occupy http://t.co/fZ38XMeH","Don't know about ""dark manipulators"", but Adbusters played a major role in creating Occupy",1,0,1,negative,neutral
+1.18e+18,https://x.com/elonmusk/status/1177066483375058944,"@Jennerator211 @Erdayastronaut Mk1 ship is around 200 tons dry &amp; 1400 tons wet, but aiming for 120 by Mk4 or Mk5. Total stack mass with max payload is 5000 tons.","Mk1 ship is around 200 tons dry & 1400 tons wet, but aiming for 120 by Mk4 or Mk5. Total stack mass with max payload is 5000 tons.",1,2,1,positive,neutral
+1.17e+18,https://x.com/elonmusk/status/1166126085903282177,"@SciGuySpace Raptor uses dual redundant torch igniters. Better long-term, but more finicky in development.","Raptor uses dual redundant torch igniters. Better long-term, but more finicky in development.",1,2,1,positive,neutral
+9.99e+17,https://x.com/elonmusk/status/999010167793504256,"@ericbrownzzz @dmatkins137 @ShayneRarma @NASA But ya know what, let’s test that theory. Maybe we do want UAW back, even tho UAW betrayed us 8 years ago &amp; left us here to rot. Maybe we want UAW back even tho injury rate today is 1/2 what it was with them &amp; wages were lower. Maybe. Let’s hold a vote &amp; find out.","But ya know what, let's test that theory. Maybe we do want UAW back, even tho UAW betrayed us 8 years ago & left us here to rot. Maybe we want UAW back even tho injury rate today is 1/2 what it was with them & wages were lower. Maybe. Let's hold a vote & find out.",0,0,1,negative,neutral
+1.76e+18,https://x.com/elonmusk/status/1762146007385805300,"@zerohedge My guess is zero people get fired and they just fix the obvious stuff, while leaving the overall manipulation in place","My guess is zero people get fired and they just fix the obvious stuff, while leaving the overall manipulation in place",0,1,0,neutral,negative
+1.77e+18,https://x.com/elonmusk/status/1773856964746805687,"@KettlebellDan People trash me all day. It’s fine. 
+
+Mark Cuban is a 😢 baby.",People trash me all day. It's fine. Mark Cuban is a baby.,0,2,1,positive,neutral
+1.69e+18,https://x.com/elonmusk/status/1687520435825745920,"The New York Times actually has the nerve to support calls for genocide! If ever there was a time to cancel that publication, it is now.
+
+You can read their articles for free anyway using https://t.co/2NjvMTsWmj. https://t.co/ow11wxw7Ny","The New York Times actually has the nerve to support calls for genocide! If ever there was a time to cancel that publication, it is now. You can read their articles for free anyway using",0,2,1,positive,neutral
+1.76e+18,https://x.com/elonmusk/status/1761176276621254807,"Meta Staff Found Instagram Tool Enabled Child Exploitation. The Company Pressed Ahead Anyway.
+
+And yet @Disney spends billions on advertising with Meta … https://t.co/a8TDWMnYNH",Meta Staff Found Instagram Tool Enabled Child Exploitation. The Company Pressed Ahead Anyway. And yet spends billions on advertising with Meta …,0,0,1,negative,neutral
+1.11e+18,https://x.com/elonmusk/status/1109895691587862528,"To be precise, midnight on April 1, so effective April 2","To be precise, midnight on April 1, so effective April 2",1,1,2,neutral,positive
+1.84e+18,https://x.com/elonmusk/status/1838338126567088242,Very misleading …,Very misleading …,0,1,0,neutral,negative
+1.76e+18,https://x.com/elonmusk/status/1760323775768453481,"@RichardHanania Yeah, the legacy media is obsessed","Yeah, the legacy media is obsessed",0,2,1,positive,neutral
+1.86e+18,https://x.com/elonmusk/status/1862337000411447422,"@pcgamer Who owns you?
+
+PC Gamer used to be great, but turned into unreadable crap for several years.","Who owns you? PC Gamer used to be great, but turned into unreadable crap for several years.",0,2,1,positive,neutral
+1.01e+18,https://x.com/elonmusk/status/1008124944289370113,"@michaelshermer Direct democracy by the people. Laws must be short, as there is trickery in length. Automatic expiration of rules to prevent death by bureaucracy. Any rule can be removed by 40% of people to overcome inertia. Freedom.","Direct democracy by the people. Laws must be short, as there is trickery in length. Automatic expiration of rules to prevent death by bureaucracy. Any rule can be removed by 40% of people to overcome inertia. Freedom.",1,0,1,negative,neutral
+1.86e+18,https://x.com/elonmusk/status/1861797386693353706,"This is undemocratic. The EU parliament should vote directly on matters, not give up authority to the EU commission.","This is undemocratic. The EU parliament should vote directly on matters, not give up authority to the EU commission.",0,0,1,negative,neutral
+1.84e+18,https://x.com/elonmusk/status/1839931278340010214,From many countries,From many countries,1,0,1,negative,neutral
+1.23e+18,https://x.com/elonmusk/status/1226920273753997316,@G_d_Photographr Sounds like we should open a Tesla Center there!,Sounds like we should open a Tesla Center there!,2,0,1,negative,neutral
+1.41e+18,https://x.com/elonmusk/status/1413739988399833091,@edisoneom @richardbranson @StephenAtHome @thegreatkhalid @Cmdr_Hadfield @kelliegerardi @virgingalactic Only ever have,Only ever have,1,2,1,positive,neutral
+1.89e+18,https://x.com/elonmusk/status/1889262650502123630,@stillgray But really how did she?,But really how did she?,1,0,1,negative,neutral
+1.86e+18,https://x.com/elonmusk/status/1860040571626340764,"The most entertaining outcome, especially if ironic, is most likely 😂","The most entertaining outcome, especially if ironic, is most likely",1,1,2,neutral,positive
+1.65e+18,https://x.com/elonmusk/status/1645116142791393283,Tesla opening Megapack factory in Shanghai to supplement output of Megapack factory in California,Tesla opening Megapack factory in Shanghai to supplement output of Megapack factory in California,2,2,1,positive,neutral
+1.81e+18,https://x.com/elonmusk/status/1809377894571077842,"When is there not one – just one – even *attempted* prosecution of that Epstein (Bill Gates &amp; Reid Hoffman come to mind)
+client list. 
+
+Either FBI does their duty or the case for an entire departmental reset or abolishment is strong.",When is there not one – just one – even *attempted* prosecution of that Epstein (Bill Gates & Reid Hoffman come to mind) client list. Either FBI does their duty or the case for an entire departmental reset or abolishment is strong.,0,0,1,negative,neutral
+1.65e+18,https://x.com/elonmusk/status/1653567634657656832,@Damadeferroofic These guys? https://t.co/qLxjXDObGH,These guys?,1,1,2,neutral,positive
+1.87e+18,https://x.com/elonmusk/status/1873188759526887447,"SpaceX launch underway 
+ https://t.co/8JxXqiJho2",SpaceX launch underway,1,2,1,positive,neutral
+1.57e+18,https://x.com/elonmusk/status/1571154307759603718,to help mend the fault in our stars,to help mend the fault in our stars,1,0,1,negative,neutral
+1.61e+18,https://x.com/elonmusk/status/1614119750627459074,"The higher the rates, the harder the fall","The higher the rates, the harder the fall",0,1,0,neutral,negative
+1.5e+18,https://x.com/elonmusk/status/1503831484523819011,"Thank you for the offer, but such excellent training would give me too much of an advantage. 
+
+If he is afraid to fight, I will agree to use only my left hand and I am not even left-handed.
+
+Elona","Thank you for the offer, but such excellent training would give me too much of an advantage. If he is afraid to fight, I will agree to use only my left hand and I am not even left-handed. Elona",2,0,2,negative,positive
+1.42e+18,https://x.com/elonmusk/status/1423682460748066818,"@WholeMarsBlog @NASASpaceflight @BBCAmos There is a reason no fully reusable orbital rocket has been built – it’s an insanely hard problem. 
+
+Moreover, it must be rapidly &amp; completely reusable (like an airplane). This is the only way to make life multiplanetary.
+
+Efficiencies of scale is why Starship is so large.","There is a reason no fully reusable orbital rocket has been built – it's an insanely hard problem. Moreover, it must be rapidly & completely reusable (like an airplane). This is the only way to make life multiplanetary. Efficiencies of scale is why Starship is so large.",1,2,0,positive,negative
+1.21e+18,https://x.com/elonmusk/status/1211232157370404864,"@RationalEtienne @EvaFoxU @amargosavalley That might have something to do with it. “Stalin: Court of the Red Tsar” was one of the few books so dark I had to stop reading. If only they’d listened to Lenin’s last wish, much tragedy may have been averted.","That might have something to do with it. ""Stalin: Court of the Red Tsar"" was one of the few books so dark I had to stop reading. If only they'd listened to Lenin's last wish, much tragedy may have been averted.",1,0,1,negative,neutral
+1.53e+18,https://x.com/elonmusk/status/1529100718065569792,"Contrary to what many think, the richer someone is, the fewer kids they have.
+
+I am a rare exception. Most people I know have zero or one kid.","Contrary to what many think, the richer someone is, the fewer kids they have. I am a rare exception. Most people I know have zero or one kid.",1,0,1,negative,neutral
+1.12e+18,https://x.com/elonmusk/status/1117563769159286784,Winter is coming,Winter is coming,1,1,2,neutral,positive
+1.65e+18,https://x.com/elonmusk/status/1645589870100840449,@amuse @96hoya Downtown SF looks like a zombie apocalypse. People who’ve not been there have no idea.,Downtown SF looks like a zombie apocalypse. People who've not been there have no idea.,0,0,1,negative,neutral
+1.22e+18,https://x.com/elonmusk/status/1217995711196778497,@jameslin123321 @Erdayastronaut Helping to pay for this is why I’m accumulating assets on Earth.,Helping to pay for this is why I'm accumulating assets on Earth.,1,2,0,positive,negative
+1.13e+18,https://x.com/elonmusk/status/1131676702491283456,"@EcoHeliGuy @Erdayastronaut @JaneidyEve @13ericralph31 @SPEXcast @bluemoondance74 @Orion_Sword @Some1gee @SpaceX Yes, will be used for rear cargo storage. Also helps manage center of mass for heavy payloads when forward cargo is full.","Yes, will be used for rear cargo storage. Also helps manage center of mass for heavy payloads when forward cargo is full.",1,2,1,positive,neutral
+1.87e+18,https://x.com/elonmusk/status/1873971592096866511,@techiedani The brutal reality of the situation will hit like a tsunami towards the end of next year,The brutal reality of the situation will hit like a tsunami towards the end of next year,0,2,1,positive,neutral
+1.69e+18,https://x.com/elonmusk/status/1689188669251338240,@RichardDawkins Many parallels,Many parallels,1,0,1,negative,neutral
+1.89e+18,https://x.com/elonmusk/status/1892842450370142405,Restoring solvency to America is essential to protect Social Security &amp; medical care,Restoring solvency to America is essential to protect Social Security & medical care,1,2,1,positive,neutral
+1.91e+18,https://x.com/elonmusk/status/1910092373981630862,SuperGrok is free for students,SuperGrok is free for students,2,2,1,positive,neutral
+1.65e+18,https://x.com/elonmusk/status/1653567031336214528,"@DanielleFong @growing_daniel As Andrej said, if you hit Earth with enough photons, eventually it emits a Tesla!","As Andrej said, if you hit Earth with enough photons, eventually it emits a Tesla!",2,0,1,negative,neutral
+1.66e+18,https://x.com/elonmusk/status/1657570459502649344,@KanekoaTheGreat Covid Cult Culture,Covid Cult Culture,0,2,1,positive,neutral
+1.68e+18,https://x.com/elonmusk/status/1679717154973945856,"@stevenmarkryan It’s not exactly per impression. What matters is how many ads were shown to other verified users.
+
+Only verified users count, as it is otherwise trivial to game the system with bots.","It's not exactly per impression. What matters is how many ads were shown to other verified users. Only verified users count, as it is otherwise trivial to game the system with bots.",1,2,1,positive,neutral
+1.48e+18,https://x.com/elonmusk/status/1482598301694238723,So informative https://t.co/rTktvhYukK,So informative,2,1,0,neutral,negative
+1.43e+18,https://x.com/elonmusk/status/1429689615707824128,@lexfridman @karpathy My son asked if we would still speak English 7000 years from now. I said probably not. There was not even the faintest hint of English 7000 years ago.,My son asked if we would still speak English 7000 years from now. I said probably not. There was not even the faintest hint of English 7000 years ago.,1,0,1,negative,neutral
+1.54e+17,https://x.com/elonmusk/status/153519464653127680,"@FareedZakaria However, China's real estate crisis will explode in a way that makes ours look puny. They can't hide it for much longer.","However, China's real estate crisis will explode in a way that makes ours look puny. They can't hide it for much longer.",0,0,2,negative,positive
+1.77e+18,https://x.com/elonmusk/status/1770073471608852762,@RepThomasMassie Or a strong-willed President,Or a strong-willed President,1,2,1,positive,neutral
+1.89e+18,https://x.com/elonmusk/status/1886637579577020896,Don’t mess with @DOGE https://t.co/wgdJBxNzyG,Don't mess with,1,1,0,neutral,negative
+4.96e+17,https://x.com/DarbsenWtf/status/496010572333580288,"Netflix doet kut, dus dan maar teringherrie pompen. Iemand nog suggesties?","Netflix doet kut, dus dan maar teringherrie pompen. Iemand nog suggesties?",1,0,1,negative,neutral
+1.6e+18,https://x.com/elonmusk/status/1595551706749624321,"@semaforben All public holders of Twitter were allowed to roll their stock into Twitter as a private company, but he did not do so. Your reporting made it falsely sound like he did, when in fact he owns 0%. 
+
+For the last time, how much of you does SBF own? Stop dodging the question.","All public holders of Twitter were allowed to roll their stock into Twitter as a private company, but he did not do so. Your reporting made it falsely sound like he did, when in fact he owns 0%. For the last time, how much of you does SBF own? Stop dodging the question.",0,2,1,positive,neutral
+1.85e+18,https://x.com/elonmusk/status/1851971319111262506,Let us know if you’ve been illegally fired for expressing your political views,Let us know if you've been illegally fired for expressing your political views,0,1,0,neutral,negative
+1.87e+18,https://x.com/elonmusk/status/1873936504520925233,@teslaownersSV It just literally is,It just literally is,1,1,0,neutral,negative
+1.32e+18,https://x.com/elonmusk/status/1319059307804045316,"@WholeMarsBlog Not intentional! We just wanted to show that you could theoretically convert the entire US vehicle fleet to electric using only the lithium in Nevada, a single state. Tesla will do lithium mining only as needed. We also found a way to extract lithium using NaCl (table salt).","Not intentional! We just wanted to show that you could theoretically convert the entire US vehicle fleet to electric using only the lithium in Nevada, a single state. Tesla will do lithium mining only as needed. We also found a way to extract lithium using NaCl (table salt).",2,2,0,positive,negative
+1.62e+18,https://x.com/elonmusk/status/1615192220419887105,@BillyM2k Should Twitter keep it active?,Should Twitter keep it active?,1,2,1,positive,neutral
+1.47e+18,https://x.com/elonmusk/status/1465761470147346435,"@GerberKawasaki We had to shift some Starlink satellite orbits to reduce probability of collision. Not great, but not terrible either.
+
+Station &amp; Dragon have micrometeorite shields (ultra high velocity impact absorption), but EVA suits do not, hence higher risk for spacewalk.","We had to shift some Starlink satellite orbits to reduce probability of collision. Not great, but not terrible either. Station & Dragon have micrometeorite shields (ultra high velocity impact absorption), but EVA suits do not, hence higher risk for spacewalk.",1,0,1,negative,neutral
+1.66e+18,https://x.com/elonmusk/status/1662764138043518977,@zerohedge For obvious &amp; sensible reasons,For obvious & sensible reasons,1,0,1,negative,neutral
+7.17e+17,https://x.com/elonmusk/status/716750603813318656,@PeteEhmKay @gerardomarina what's the link to that?,what's the link to that?,1,2,1,positive,neutral
+1.74e+18,https://x.com/elonmusk/status/1744780200045384116,"@jacksonhinklle @qassam2024 Hamas was calling for the extinction of Israel and, unlike Iran which does the same, are not recognized as leaders of a country by the UN","Hamas was calling for the extinction of Israel and, unlike Iran which does the same, are not recognized as leaders of a country by the UN",0,0,1,negative,neutral
